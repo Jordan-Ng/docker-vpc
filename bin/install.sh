@@ -11,6 +11,7 @@ else
     echo -e "\n     ===== Installing Docker ====\n"
     sleep 2
     brew install docker
+    # brew install docker-buildx
 fi
 
 # check if colima is installed (needed to create linux vm for docker)

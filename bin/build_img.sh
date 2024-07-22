@@ -1,0 +1,1 @@
+docker build -t bare_nginx:latest ./docker_images   
