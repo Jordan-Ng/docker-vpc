@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const isDev = true
 
 function createWindow() {
@@ -34,7 +34,27 @@ ipcMain.handle('run-command', (event, command) => {
         }
       });
     });
-  });
+});
+
+ipcMain.on("spawn", (event, commandObj) => {
+  return new Promise((resolve, reject) => {
+    let childProcess = spawn(commandObj.command, commandObj.args)
+    
+    childProcess.on("error", err => event.sender.send("command-output", err.toString()))    
+    childProcess.stdout.on("data", data => event.sender.send("command-output", data.toString()))
+    childProcess.stderr.on("data", data => event.sender.send("command-output", data.toString()))
+
+    childProcess.on("close", code => {
+      // if (code == 0) {resolve("0")}
+      // reject("1")
+      event.sender.send("child-exit", code.toString())
+    })
+  })
+})
+
+ipcMain.handle("pathJoin", (event, pathArgs) => {
+  return path.join(__dirname, ...pathArgs)
+})
 
 app.on('ready', createWindow);
 

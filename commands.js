@@ -1,4 +1,3 @@
-
 // format => module : action : isFunction
 
 const commands = {
@@ -51,6 +50,37 @@ const commands = {
         command: (volumes) => (
             `docker volume rm ${volumes}`
         )
+    },
+    
+    "ec2:list_os_images" : {
+        description: "list available images on the machine",
+        command: `docker image inspect $(docker images --format "{{.Repository}} ") --format json \
+        | jq '[.[] | {"repo" : .RepoTags, "labels" : .Config.Labels}]' `        
+    },
+
+    "ec2:get_container_information:fx" : {
+        description: "get information for a specific container",
+        command: (contName) => (
+            `docker container inspect ${contName}`
+        )
+    },
+
+    "ec2:build_image_from_dockerfile:fx" : {
+        description: "build image from dockerfile located at given path",
+        command: () => (
+            // `docker build -t test_cont ./poc`
+            {
+                command: "docker",
+                args: ["build", "-t", "test_cont", "./poc"]
+            }
+        )
+    },
+
+    "ec2:cat_dockerfile:fx" : {
+        description: "list contents of dockerfile to stdout",
+        command: (pathName) => {            
+            return `cat ${pathName}`
+        }
     }
 }
 

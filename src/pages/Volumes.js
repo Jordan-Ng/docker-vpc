@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from "react"
 import {Button, Container, Loader, TextInput, Badge, Table as TableMan, Text, Space} from "@mantine/core"
 import {Table, ActionIcon, Modal} from "../components"
-import {IconRefresh, IconPlus, IconTrash} from "@tabler/icons-react"
+import {IconRefresh, IconPlus, IconTrash, IconAlertTriangle} from "@tabler/icons-react"
 import fx from "../helpers/fx"
 
 
@@ -27,7 +27,7 @@ const CreateVolumeForm = ({close, callback}) => {
                     setVolName(e.target.value)
                 }}
                 
-                error={volName.length == 1 ? "Please enter a container name with more than 1 character" : ""}
+                error={volName.length == 1 ? "Please enter a volume name with more than 1 character" : ""}
             />
             <Button disabled={volName.length <= 1} color="green" fullWidth onClick={handleSubmit}>Create</Button>
         </>        
@@ -79,6 +79,11 @@ const DeleteConfirmation = ({close, callback, states}) => {
     return(
         <>
             <Text>Are you sure you want to delete the following volume(s) ?</Text>
+            <Text size="sm" c="red" style={{ display: "flex", alignItems:"center"}}>
+                <IconAlertTriangle style={{ width: "15px", height: "15px"}}/> 
+                &nbsp; 
+                This is a destructive operation*
+            </Text>
             <Space h="md"/>                 
             {states.state.map((vol, ind) => <Badge key={ind} style={{marginRight: "5px"}}>{vol}</Badge>)}
             <Space h="md"/>
@@ -150,7 +155,8 @@ const Volumes = () => {
                         buttonStyle : {
                             marginLeft: "5px"
                         },
-                        showCloseButton: false
+                        showCloseButton: false,
+                        // modalTitle : "Create New Volume"
                     }}
                 />
             </div>

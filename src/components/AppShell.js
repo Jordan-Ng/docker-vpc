@@ -43,7 +43,7 @@ const AppShell = ({child}) => {
         )) : ""}
     </Appshell.Navbar>
 
-    <Appshell.Main>{child}</Appshell.Main>
+    <Appshell.Main bg="whitesmoke">{child}</Appshell.Main>
 
     <Appshell.Aside></Appshell.Aside>
     
