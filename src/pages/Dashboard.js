@@ -2,7 +2,7 @@ import {Container, Stack, Group } from "@mantine/core"
 import {DonutChart} from '@mantine/charts'
 import React, {useState, useEffect} from "react"
 
-const EC2Dashboard = () => {
+const Dashboard = () => {
     return(
         <Container>
             <Stack gap="xl" style={{height: "500px", border: "2px solid blue"}}>
@@ -38,4 +38,4 @@ const EC2Dashboard = () => {
     )
 }
 
-export default EC2Dashboard
+export default Dashboard

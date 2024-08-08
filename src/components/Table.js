@@ -55,11 +55,7 @@ const Table = ({props}) => {
        <TableMan.Thead>
             <TableMan.Tr>
                 {props?.rowChecked ? <TableMan.Th key="checked-column"></TableMan.Th> : ""}
-                {
-                // props?.showColumns ? 
-                props?.columns.map((col, ind) => <TableMan.Th key={ind}>{col}</TableMan.Th>) 
-                // : Object.keys(props.data).map((col, ind) => <TableMan.Th key={ind}></TableMan.Th>)
-                }
+                {props?.columns.map((col, ind) => <TableMan.Th key={ind}>{col}</TableMan.Th>)}
             </TableMan.Tr>
         </TableMan.Thead>
 
