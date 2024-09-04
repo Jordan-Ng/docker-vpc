@@ -1,17 +1,19 @@
-import React from 'react';
-import { AppShell as Appshell, Burger, Group, Skeleton, Image, Space, Text, alpha } from '@mantine/core';
+import React, { useEffect } from 'react';
+import { AppShell as Appshell, Burger, Group, Image, Space, Text, NavLink, Collapse } from '@mantine/core';
+import navigationMenu from '../constants/NAVIGATION';
+import {Link} from "react-router-dom"
 import Logo from "../assets/logo.png"
 import { useDisclosure } from '@mantine/hooks';
 
-const AppShell = ({child}) => {
-  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(false);  
+const AppShell = ({child, currentService}) => {
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(false); 
 
   return (
     <Appshell
-    header={{ height: 60}}
+    header={{ height: 60}} 
     navbar={{
       width: desktopOpened ? 300 : 60,
-      breakpoint: 'sm'      
+      breakpoint: 'sm'    
     }} 
     aside = {{
         width: 60
@@ -31,16 +33,51 @@ const AppShell = ({child}) => {
       </Group>
     </Appshell.Header>
 
-    <Appshell.Navbar p="md">
+    <Appshell.Navbar p="md" >
 
-        <Burger opened={desktopOpened} onClick={toggleDesktop} size="sm"  style={{width: "100%", display: "flex", justifyContent: desktopOpened ? "right" : "center", alignItems: "center"}}/>
+        <Burger 
+          opened={desktopOpened} 
+          onClick={toggleDesktop} 
+          size="sm"  
+          style={{
+            width: "100%", 
+            display: "flex", 
+            justifyContent: desktopOpened ? "right" : "center", 
+            alignItems: "center"}}/>
 
-      {desktopOpened ? Array(15)
-        .fill(0)
-        .map((_, index) => (
-          <Skeleton key={index} h={28} mt="sm" animate={false} />
-            
-        )) : ""}
+      
+        {desktopOpened ? Object.keys(navigationMenu[currentService]).map((label, index) => (
+          
+          navigationMenu[currentService][label].type == "non-collapsible" ? 
+            <NavLink 
+              // component='button'
+              component={Link}
+              to={navigationMenu[currentService][label].route}
+              key={index}
+              label={label}
+            />
+               : 
+            <NavLink
+              component="button"
+              key={index}
+              label={label}
+            >
+              {Object.keys(navigationMenu[currentService][label]).map((sublabel, ind) => {
+                if (sublabel == "type" || sublabel == "route") return
+
+                return(<NavLink 
+                  // component='button'
+                  component={Link}
+                  to={navigationMenu[currentService][label].route +  "/" + navigationMenu[currentService][label][sublabel].route}
+                  key={ind}
+                  label={sublabel}
+                />)
+
+              })}
+            </NavLink>
+        )) : ""
+
+        }
     </Appshell.Navbar>
 
     <Appshell.Main bg="whitesmoke">{child}</Appshell.Main>

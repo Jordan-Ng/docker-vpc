@@ -1,4 +1,5 @@
 import commands from "../../commands"
+import { notifications } from "@mantine/notifications"
 
 const exec = (command) => {
 
@@ -26,25 +27,47 @@ const fx = {
                 .then(data => res(data))
                 .catch(err => rej(err))
             })
+        },
+
+        spawn : (command) => {
+            return new Promise((res, rej) => {
+                window.electron.spawn(command).then(data => res(data))
+                .catch(err => rej(err))
+            })
+        },
+
+        notify : (isSuccessful=true, notificationObj) => {
+            
+            isSuccessful ? notifications.show({
+                    title: "Success!",
+                    message: notificationObj.message,
+                    position: "top-right"
+                }) 
+                : notifications.show({
+                    title: "Error!",
+                    message: notificationObj.message,
+                    position: "top-right"
+                })
         }
     },
 
     // ======= Volumes =======
     volume: {
         create: (volName) => {    
-            return exec(commands["volume:create:fx"].command(volName))            
-            .catch(err => console.log(err))
+            return exec(commands["volume:create:fx"].command(volName))
+            .then(data => data)            
+            .catch(err => err)
         },
 
         list: () => {
             return exec(commands["volume:list_all_format_short"].command)
-            .then(data => data)
+            .then(data => data.out)
             .catch(err => err)
         },
 
         list_attachments: (volName) => {
             return exec(commands["volume:list_attachments:fx"].command(volName))
-            .then(data => data)
+            .then(data => data.out)
             .catch(err => console.log(err))
         },
 
@@ -57,9 +80,26 @@ const fx = {
     },
 
     ec2: {
+        list_instances: () => {
+            return exec(commands["ec2:list_instances"].command)
+            .then(data => data.out)
+            .catch(err => err.toString())
+        },
+
+        delete_instances: async (instancesArray) => {
+            const instances = instancesArray.join(" ")
+            
+            return exec(`./bin/instance_cleanup.sh "${instances}"`)
+            .then(data => data)
+            .catch(err => err.toString())
+            // return exec(commands["ec2:delete_instances:fx"].command(instances))
+            // .then(data => data)
+            // .catch(err => err.toString())
+        },
+
         list_os_images: () => {
             return exec(commands["ec2:list_os_images"].command)
-            .then(data => data)
+            .then(data => data.out)
             .catch(err => console.log("list_os_image", err))
         },
 
@@ -80,6 +120,18 @@ const fx = {
             .then(absPath => exec(commands["ec2:cat_dockerfile:fx"].command(absPath)))
             .then(data => data)
             .catch(err => {throw new Error(err.toString())})
+        },
+
+        ssh_instance: (targetCont, onStdout, onExit) => {
+            window.electron.pathJoin(["bin", "instance_ssh.sh"])            
+            .then(absPath => window.electron.spawn({
+                command: absPath,
+                args: [...targetCont]
+            }))
+            .catch(err => console.log(err))
+
+            window.electron.onOutput(onStdout)
+            window.electron.onExit(onExit)
         }
     }
 }

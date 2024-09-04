@@ -1,18 +1,17 @@
 import React, {useState, useEffect} from "react"
-import {Button, Container, Loader, TextInput, Badge, Table as TableMan, Text, Space} from "@mantine/core"
-import {Table, ActionIcon, Modal} from "../components"
-import {IconRefresh, IconPlus, IconTrash, IconAlertTriangle} from "@tabler/icons-react"
-import fx from "../helpers/fx"
+import {Button, Container, Loader, TextInput, Badge, Table as TableMan} from "@mantine/core"
+import {Table, ActionIcon, Modal, DeleteConfirmationModal} from "../../components"
+import {IconRefresh, IconPlus, IconTrash} from "@tabler/icons-react"
+import fx from "../../helpers/fx"
 
 
-const CreateVolumeForm = ({close, callback}) => {
+const CreateVolumeForm = ({close, onClickHandler}) => {
 
     const [volName, setVolName] = useState("")
 
-    const handleSubmit = async () => {        
-        await fx.volume.create(volName)
+    const handleSubmit = async () => {                
+        onClickHandler(volName)
         close()
-        callback()
     }
 
     return(        
@@ -67,33 +66,6 @@ const AttachmentModal = ({data}) => {
 }
 
 
-const DeleteConfirmation = ({close, callback, states}) => {
-    const handleClick = async () => {
-        const deleted = await fx.volume.delete(states.state)
-        states.setState([])
-        close()
-        callback()
-    }
-
-
-    return(
-        <>
-            <Text>Are you sure you want to delete the following volume(s) ?</Text>
-            <Text size="sm" c="red" style={{ display: "flex", alignItems:"center"}}>
-                <IconAlertTriangle style={{ width: "15px", height: "15px"}}/> 
-                &nbsp; 
-                This is a destructive operation*
-            </Text>
-            <Space h="md"/>                 
-            {states.state.map((vol, ind) => <Badge key={ind} style={{marginRight: "5px"}}>{vol}</Badge>)}
-            <Space h="md"/>
-                
-            
-            <Button color="red" fullWidth onClick={handleClick}>Delete</Button>
-        </>
-    )
-}
-
 const Volumes = () => {
     const [volumes, setVolumes] = useState(null)
     const [selectedRows, setSelectedRows] = useState([])
@@ -103,11 +75,12 @@ const Volumes = () => {
         setVolumes(JSON.parse(data))
     }
 
-    const getVolumeAttachments = async (props) => {        
-    
-        const data = JSON.parse( await fx.volume.list_attachments(props.data.name) )
+    const getVolumeAttachments = async (dataObj) => {        
+        
+        const data = JSON.parse( await fx.volume.list_attachments(dataObj.name) )
+        
         return {
-            volName : props.data.name,
+            volName : dataObj.name,
             data : data,
             columns : data.length > 0 ? Object.keys(data[0]) : null
         }        
@@ -134,29 +107,65 @@ const Volumes = () => {
                 />
                 <Modal 
                     props = {{                        
-                        child: DeleteConfirmation,
+                        child: DeleteConfirmationModal,
                         childState: {
                             state : selectedRows,
                             setState : setSelectedRows
                         },
-                        callback : getVolumes,
+                        onClickHandler : async () => {
+                            const responseObj = await fx.volume.delete(selectedRows)
+                            
+                            if (responseObj.exitStatus == 0){
+                                setSelectedRows([])
+
+                                fx.base.notify({
+                                    title: "Great Success!",
+                                    message: "Volume(s) deleted successfully"
+                                })
+                            }
+                            
+                            else {
+                                fx.base.notify({
+                                    title: "Sum Ting Wong",
+                                    message: "Oh oh .. we're in trouble .."
+                                })
+                            }
+
+                            getVolumes()
+                        },
                         color: "red",
                         rightIcon : <IconTrash />,
                         buttonText : "Delete Volume(s)",
-                        buttonDisabled : selectedRows.length == 0                        
+                        buttonDisabled : selectedRows?.length == 0  
                     }}
                 />
                 <Modal 
                     props = {{
                         child : CreateVolumeForm,
-                        callback : getVolumes,
+                        onClickHandler : async (volName) => {
+
+                            const responseObj = await fx.volume.create(volName)
+                            if (responseObj.exitStatus == 0){
+                                fx.base.notify({
+                                    title: "Great Success!",
+                                    message: "Volume created successfully!"
+                                })
+                            }
+
+                            else {
+                                fx.base.notify({
+                                    title: "Sum Ting Wong",
+                                    message: "Oh oh .. we're in trouble .."
+                                })
+                            }
+                            getVolumes()
+                        },
                         rightIcon : <IconPlus />,
                         buttonText : "Create Volume",
                         buttonStyle : {
                             marginLeft: "5px"
                         },
-                        showCloseButton: false,
-                        // modalTitle : "Create New Volume"
+                        showCloseButton: false                        
                     }}
                 />
             </div>
@@ -167,11 +176,13 @@ const Volumes = () => {
                 child : AttachmentModal,
                 modalTitle : "Attachment Details",
                 callback : getVolumeAttachments,
-                rowChecked : true,
-                data : volumes,
-                selectedRows,
-                setSelectedRows
-            }} /> 
+                rowSelectable : true,
+                selectedRows: selectedRows,
+                setSelectedRows : setSelectedRows,
+                data : volumes                
+                }} 
+                                
+                /> 
             : <Loader color="blue" style={{position: "absolute", left: "50%", top: "25%"}}/>}            
             
         </Container>

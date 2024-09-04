@@ -46,10 +46,30 @@ const commands = {
     },
 
     "volume:delete:fx" : {
-        description: "delete containers. Expects space separated values",
+        description: "delete volumes. Expects space separated values",
         command: (volumes) => (
             `docker volume rm ${volumes}`
         )
+    },
+
+    "ec2:list_instances" : {
+        description: "list running instances with label = virtual_instances",
+        command: `docker container ls -a --format '{{ json . }}' \
+        | jq -s '
+            map( 
+                .Labels=( 
+                .Labels 
+                | split(",") 
+                | map(split("=") 
+                | {(.[0]): .[1]}) 
+                | add ) ) 
+            | map(select(.Labels.type=="virtual_instance")) '
+        `        
+    },
+
+    "ec2:delete_instances:fx" : {
+        description: "delete containers. Expects space separated values",
+        command: (containers) => (`docker rm ${containers}`)        
     },
     
     "ec2:list_os_images" : {

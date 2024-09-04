@@ -1,14 +1,16 @@
 import React, {useState, useEffect, useRef} from "react"
 import {Container, Text, TextInput, SimpleGrid, Select, Textarea, Button, Group, Space, Checkbox, Badge, Pill, Loader} from "@mantine/core"
 import {IconCheck, IconX} from "@tabler/icons-react"
-import {Card, Input, UserScriptForm} from "../components"
-import INSTANCE_TYPES from "../constants/INSTANCE_TYPES.json"
-import fx from "../helpers/fx"
+import {Card, Input, UserScriptForm} from "../../components"
+import INSTANCE_TYPES from "../../constants/INSTANCE_TYPES.json"
+import fx from "../../helpers/fx"
+import { Link, useNavigate } from "react-router-dom"
 
 const CreateInstances = () => {
     const userScriptRef = useRef()
     const [instanceTypes, setInstanceTypes] = useState({})
     const [timer, setTimer] = useState(null)
+    const navigate=useNavigate()
 
     const [validName, setValidName] = useState(undefined)
     
@@ -46,8 +48,7 @@ const CreateInstances = () => {
             
         let availableVolumes 
         fx.volume.list().then(data => {
-            availableVolumes = JSON.parse(data).map(vol => vol["name"])
-            // console.log(availableVolumes)
+            availableVolumes = JSON.parse(data).map(vol => vol["name"])            
         })
 
         // populate select input for images
@@ -79,17 +80,18 @@ const CreateInstances = () => {
 
     }, [])
 
-    const handleTextChange = (e) => {
+    const handleTextChange = (e) => {         
+        
         setValidName(undefined)
         setSummary({
             ...summary,
-            instanceName: e.target.value
+            instanceName: e.target.value.replace(/\s+/g, '-')
         })
 
         clearTimeout(timer)
 
         const newTimer = setTimeout(async () => {            
-             setValidName(await fx.ec2.is_valid_instance_name(e.target.value.replace(/\s+/g, '-')))
+             setValidName(await fx.ec2.is_valid_instance_name(e.target.value.replace(/\s+/g, '-')) && e.target.value.length >= 3)
             
         }, 1000)
 
@@ -118,7 +120,7 @@ const CreateInstances = () => {
     }
 
     return(
-        <Container>
+        <Container>            
             <Text size="lg" fw={500}>Launch an instance</Text>
             <Text size="sm">Create containers that run in your private docker environment. Quickly get started by following the simple steps below.</Text>
 
@@ -134,7 +136,16 @@ const CreateInstances = () => {
                     <TextInput 
                     label="Name" 
                     placeholder='e.g. my-first-instance'
+                    value={summary.instanceName || ""}
                     onChange={handleTextChange}
+                
+                    {...summary.instanceName === null || summary.instanceName?.length < 3 ?
+                        {error: "Please Enter a Valid Instance Name (min. 3 characters)"} :
+
+                        !validName && validName !== undefined ? 
+                        {error: "Instance Name Already Exists"} : {}
+                    }
+                    
                     />
                     </Card>
 
@@ -153,6 +164,8 @@ const CreateInstances = () => {
                         ]}
                         placeholder="select an option"
                         onChange={(val, opt) => handleSelect(val, opt, "image")}     
+                        {...summary.image === null ? {error: "Please select an option"} : {}}                        
+
                     />
                     </Card>
 
@@ -170,7 +183,8 @@ const CreateInstances = () => {
                             items: options.instance_types[key].map(obj => obj["Instance Size"])
                         }))}
                         placeholder="select an option"                        
-                        onChange={(val, opt) => handleSelect(val, opt, "instanceType")}                        
+                        onChange={(val, opt) => handleSelect(val, opt, "instanceType")}
+                        {...summary.instanceType === null ? {error: "Please select an option"} : {}}                        
                     />
 
                     </Card>
@@ -189,6 +203,7 @@ const CreateInstances = () => {
                         data = {options.volume}  
                         value = {summary.volume}                      
                         onChange={(val, opt) => handleSelect(val, opt, "volume")}
+                        {...summary.volume === null && summary.instanceType?.["EBS Only"] ? {error: "Please select an option"} : {}}
                     />
                     </Card>
 
@@ -298,9 +313,35 @@ const CreateInstances = () => {
                         <Space h="xl"/>
                         <Space h="xl"/>
                         <Button fullWidth onClick={() => {
-                            const scripts = userScriptRef.current.getUserScripts()
-                            console.log(scripts)
-                        }}>Launch Instance</Button>
+                            const emptyFields= Object.keys(summary)
+                                .filter(field => summary[field] == undefined)
+                            
+                            if (emptyFields.length > 0){
+                                const invalidFormObject = {}
+                                for (let field of emptyFields) {
+                                    invalidFormObject[field] = null
+                                    // console.log(field)
+                                }
+                                const inValidFields ={
+                                    ...summary,                                
+                                    ...invalidFormObject
+                                } 
+                                setSummary(inValidFields)
+                                return
+                            }
+
+
+                            // console.log("invalid fields", inValidFields)
+                            navigate(`/instance/create/${summary.instanceName}`, {state: {
+                                data: {
+                                    ...summary,
+                                    validName,
+                                    userScripts: userScriptRef.current.getUserScripts()
+                                }
+                            }})
+                            // const scripts = userScriptRef.current.getUserScripts()
+                            // console.log(scripts)
+                        }}>Launch Instance</Button>                        
                     </Card>
                     
                 </div>

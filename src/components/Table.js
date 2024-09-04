@@ -1,71 +1,101 @@
-import React, {useState, useEffect} from 'react'
-import {Table as TableMan, Modal, Card, Text, Badge, Checkbox, Paper} from "@mantine/core"
+import React, {useState} from "react"
+import {Table as TableMan, Modal, Checkbox} from "@mantine/core"
 import { useDisclosure } from '@mantine/hooks'
 
-const Row = ({props}) => {
+// ====== Row Component =======
+const Row = ({showModal, data, modalTitle, stateMgr, rowId, Child, rowSelectable, callback}) => {
     const [isOpen, {open, close}] = useDisclosure(false)
-    const [data, setData] = useState(null)
-
-    const handleClick = async (props) => {
-        
-        if (typeof props?.callback === "function"){            
-            const formattedData = await props?.callback(props)            
-            setData(formattedData)
+    const [dt, setDt] = useState(null)
+    
+    const handleClick = async () => {        
+        if (typeof callback === "function"){                                  
+            const formattedData = await callback(data)                                  
+            setDt(formattedData)
         }
-        if (props?.showModal) open()
-    }
+        if (showModal) open()
+    }        
 
-    return (
+    return(
         <>
-            {props?.showModal ? 
-            <Modal opened={isOpen} onClose={close} title={props?.modalTitle || ""} size="xl" >
-                {props?.child ? <props.child data={data} /> : ""}
+            {showModal ? 
+            <Modal opened={isOpen} onClose={close} title={modalTitle || ""} size="xl" >                
+                { <Child data={dt} /> || ""}                 
             </Modal> : ""}
 
             <TableMan.Tr
-                key={props?.rowId}                
+                key={rowId}                
             >
-                {props?.rowChecked ? 
+                {rowSelectable ? 
                 <TableMan.Td>
                     <Checkbox 
-                        checked={props?.selectedRows?.includes(props.data.name)}
-                        onChange={e => props?.setSelectedRows(e.currentTarget.checked ? [...props?.selectedRows, props.data.name] : props?.selectedRows.filter(name => name != props.data.name))}
+                        checked={stateMgr.state.includes(data.name)}
+                        onChange={e => stateMgr.setState(e.currentTarget.checked ? [...stateMgr.state, data.name] : stateMgr.state.filter(name => name != data.name))}
                     />
                 </TableMan.Td>
                 : ""}
                                 
-                {Object.values(props?.data).map((val, ind) => 
+                {Object.values(data).map((val, ind) => 
                 <TableMan.Td 
                     key={ind} 
-                    style={props?.showModal ? {cursor: "pointer"} : ""}
-                    onClick={() => handleClick(props)}>
+                    style={showModal ? {cursor: "pointer"} : ""}
+                    onClick={handleClick}
+                    >
                 {val}
                 </TableMan.Td>)}                
                 
                 
             </TableMan.Tr>            
         </>
-    )
-}
+    )}
 
 
-const Table = ({props}) => {
 
-    return (<TableMan stickyHeader stickyHeaderOffset={60} verticalSpacing="md">
-       <TableMan.Thead>
-            <TableMan.Tr>
-                {props?.rowChecked ? <TableMan.Th key="checked-column"></TableMan.Th> : ""}
-                {props?.columns.map((col, ind) => <TableMan.Th key={ind}>{col}</TableMan.Th>)}
-            </TableMan.Tr>
-        </TableMan.Thead>
+// ====== Table Component =======
+const Table = (
+    {props: {
+        showModal, 
+        modalTitle, 
+        callback, 
+        child, 
+        columns, 
+        data, 
+        rowSelectable, 
+        selectedRows, 
+        setSelectedRows
+        }
+    }) => {
 
-        <TableMan.Tbody>            
-            {props?.data.map((dt,ind) => <Row key={ind} props={{
-                ...props,
-                data: dt,                
-                }}/>)}
-        </TableMan.Tbody>        
-    </TableMan>)
-}
+    return(    
+        <TableMan 
+            stickyHeader 
+            stickyHeaderOffset={60} 
+            verticalSpacing="md">
+
+        <TableMan.Thead>
+                <TableMan.Tr>
+                    {rowSelectable ? <TableMan.Th key="checked-column"></TableMan.Th> : ""}
+                    {columns?.map((col, ind) => <TableMan.Th key={ind}>{col}</TableMan.Th>)}
+                </TableMan.Tr>
+            </TableMan.Thead>
+
+            <TableMan.Tbody>            
+                {data?.map((dt,ind) => <Row 
+                    key={ind} 
+                    showModal={showModal}
+                    modalTitle={modalTitle}
+                    callback={callback}
+                    Child={child}
+                    rowSelectable={rowSelectable || false}
+                    stateMgr={{
+                        state : selectedRows,
+                        setState: setSelectedRows
+                    }}
+                    data={dt}
+                    />
+                        )}
+            </TableMan.Tbody>        
+        </TableMan>
+    )}
+    // )
 
 export default Table

@@ -1,7 +1,7 @@
 import React from "react"
 import {Container, Badge, Space} from "@mantine/core"
-import {Table} from "../components"
-import INSTANCE_TYPES from "../constants/INSTANCE_TYPES.json"
+import {Table} from "../../components"
+import INSTANCE_TYPES from "../../constants/INSTANCE_TYPES.json"
 
 const InstanceTypes = () => {
     const data = INSTANCE_TYPES
@@ -24,7 +24,7 @@ const InstanceTypes = () => {
                     <Table 
                         props = {{
                             showModal : false,
-                            rowChecked : false,                            
+                            rowSelectable : false,                            
                             columns : Object.keys(data[instanceType][0]),                                                     
                             data: data[instanceType]                            
                         }}                        

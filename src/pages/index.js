@@ -1,0 +1,5 @@
+export {default as EC2Dashboard} from "./EC2/Dashboard"
+export {default as InstanceTypes} from "./EC2/InstanceTypes"
+export {default as Volumes} from "./EC2/Volumes"
+export {default as CreateInstance} from "./EC2/CreateInstance"
+export {default as NewInstanceProvision} from "./EC2/NewInstanceProvision"

@@ -11,8 +11,8 @@ export default function Modal({props}) {
             <ModalMan opened={isOpen} onClose={close} size="lg" title={props?.modalTitle || ""} withCloseButton={props?.showCloseButton || false}>                
                 {props?.child ? <props.child 
                 close={close} 
-                callback={props?.callback || null} 
-                states={props?.childState || null}
+                onClickHandler={props?.onClickHandler || null} 
+                states={props?.childState || null}                
                 /> 
                 : ""}
             </ModalMan>

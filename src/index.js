@@ -5,15 +5,19 @@ import App from "./App";
 
 import '@mantine/core/styles.css';
 import '@mantine/charts/styles.css';
+import '@mantine/notifications/styles.css';
 import {MantineProvider} from "@mantine/core"
+import {Notifications} from "@mantine/notifications"
 
 
 const root = createRoot(document.getElementById("root"));
 
+
 root.render(
-    <MantineProvider>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    </MantineProvider>
+    <BrowserRouter>
+        <MantineProvider>
+            <Notifications />
+            <App />        
+        </MantineProvider>
+    </BrowserRouter>        
 );

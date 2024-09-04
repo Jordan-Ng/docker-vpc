@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run build \n electron .",
     "build": "webpack --mode production",
-    "dev": "concurrently \"npm run react:serve\" \"npm run electron:run \"",
+    "dev": "concurrently \"npm run react:serve\" \"npm run electron:run\"",
     "react:serve": "webpack serve --config webpack.config.js --port 3000",
     "electron:run": "wait-on http://localhost:3000 && electron ."
   },
@@ -17,12 +17,13 @@
     "@mantine/charts": "^7.11.2",
     "@mantine/core": "^7.11.2",
     "@mantine/hooks": "^7.11.2",
+    "@mantine/notifications": "^7.12.2",
     "@tabler/icons-react": "^3.11.0",
     "electron": "^31.2.1",
     "javascript-terminal": "^1.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.25.1",
+    "react-router-dom": "^6.26.1",
     "react-terminal-component": "^1.5.0",
     "sass": "^1.77.8",
     "style-loader": "^4.0.0",

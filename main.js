@@ -26,13 +26,11 @@ function createWindow() {
 
 ipcMain.handle('run-command', (event, command) => {
     return new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          reject(stderr);
-        } else {
-          resolve(stdout);
-        }
-      });
+      exec(command, (error, stdout, stderr) => (error ? reject(stderr) : resolve({
+        exitStatus: 0,        
+        out : stdout
+      }))      
+      );
     });
 });
 
@@ -40,15 +38,12 @@ ipcMain.on("spawn", (event, commandObj) => {
   return new Promise((resolve, reject) => {
     let childProcess = spawn(commandObj.command, commandObj.args)
     
-    childProcess.on("error", err => event.sender.send("command-output", err.toString()))    
+    childProcess.on("error", err => event.sender.send("command-output", err.toString()))        
     childProcess.stdout.on("data", data => event.sender.send("command-output", data.toString()))
     childProcess.stderr.on("data", data => event.sender.send("command-output", data.toString()))
 
-    childProcess.on("close", code => {
-      // if (code == 0) {resolve("0")}
-      // reject("1")
-      event.sender.send("child-exit", code.toString())
-    })
+    childProcess.on("close", code => {event.sender.send("child-exit", code.toString())})    
+
   })
 })
 
