@@ -3,7 +3,7 @@ const path = require('path');
 const { exec, spawn } = require('child_process');
 const isDev = true
 
-function createWindow() {
+function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 1500,
     height: 800,
@@ -13,6 +13,9 @@ function createWindow() {
       contextIsolation: true,
     },
   });
+
+  
+
   if (isDev) {
     mainWindow.loadURL("http://localhost:3000")
   }
@@ -51,7 +54,21 @@ ipcMain.handle("pathJoin", (event, pathArgs) => {
   return path.join(__dirname, ...pathArgs)
 })
 
-app.on('ready', createWindow);
+app.on('ready', async () => {
+  try{
+    let cp = await spawn("sh" , [path.join(__dirname, "bin", "start_colima.sh")])
+    cp.on("error", err => console.log("ERROR", err))
+    cp.stdout.on("data", data => console.log("STDOUT", data.toString()))
+    cp.stderr.on("data", data => console.log("STDERR", data.toString()))
+  
+    cp.on("close", code => code === 0 && createWindow())
+  }
+  catch(err) {
+    console.log(err)
+  }
+
+  // createWindow()
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
