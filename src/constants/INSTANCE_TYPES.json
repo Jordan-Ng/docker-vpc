@@ -1,0 +1,41 @@
+{
+    "General Purpose": [
+        {
+            "Instance Size": "t1.micro",
+            "vCPU": 1,
+            "Memory": 1,
+            "EBS Only" : true,            
+            "Instance Storage": "EBS-Only"
+        }
+    ],
+
+    "Compute Optimized": [
+        {
+            "Instance Size": "c7g.medium",
+            "vCPU": 1,
+            "Memory": 2,
+            "EBS Only" : true,
+            "Instance Storage": "EBS-Only"
+        }
+    ],
+
+    "Memory Optimized": [
+        {
+            "Instance Size": "r8g.medium",
+            "vCPU": 1,
+            "Memory": 8,
+            "EBS Only" : true,
+            "Instance Storage": "EBS-Only"
+        }
+    ],
+
+    "Storage Optimized": [
+        {
+            "Instance Size": "i4g.large",
+            "vCPU": 2,
+            "Memory": 16,
+            "EBS Only" : false,
+            "Instance Storage": 468
+        }
+    ]
+}
