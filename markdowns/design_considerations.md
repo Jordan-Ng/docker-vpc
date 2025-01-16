@@ -6,7 +6,7 @@
 DockerVPC is developed using ElectronJS + ReactJS, interacting with docker via shell commands/scripts.
 
 ### Why ReactJS?
-ReactJS was not preferred initially, since it could introduce unused functionalities and therefore additional bloat to the project. Since I was interested in only basic UI rendering functionality in the beginning, there was an attempt ([Reactron]() - my naive implementation of react rendering library for electron) to implement a similar UI rendering engine, but as the project feature grew, Reactron was not able to support the growing requirements and it became increasingly hard to maintain both DockerVPC and debug Reactron at the same time. 
+ReactJS was not preferred initially, since it could introduce unused functionalities and therefore additional bloat to the project. Since I was interested in only basic UI rendering functionality in the beginning, there was an attempt ([Reactron](https://github.com/Jordan-Ng/reactron) - my naive implementation of react rendering library for electron) to implement a similar UI rendering engine, but as the project feature grew, Reactron was not able to support the growing requirements and it became increasingly hard to maintain both DockerVPC and debug Reactron at the same time. 
 
 As a result, ReactJS was ultimately chosen because it's a framework I was familiar with at the time, and I wanted to spend more time developing DockerVPC features.
 
