@@ -12,7 +12,7 @@ Mac GUI for AWS-like console for creating, managing and orchestrating cloud serv
 
 
 ## Sample Usage
-More information [here]()
+More information [here](https://jiaweing930113.wixsite.com/my-site-1/projects)
 
 
 ## Installation
