@@ -46,13 +46,13 @@ const App = () => {
                                   element={currentServicedRoutes[rt][label].childRoutes[cr].component}/>
                               )
                             })}
-                            
                         </Route>                                                             
                       )
-
+                      
                     })}
                 </Route>
               )})}                          
+              {/* <Route path="*" element={currentServicedRoutes["EC2 Dashboard"].component}/> */}              
           </Routes>}
         
         currentService={currentService}

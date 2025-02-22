@@ -31,7 +31,7 @@ const Terminal = ({instructions, state, setState}) => {
             stdout(" ")
     
             if(data == "0"){
-                if (state != 3){
+                if (state != Object.keys(instructions).length){
                     setState(state + 1)
                 }
             }

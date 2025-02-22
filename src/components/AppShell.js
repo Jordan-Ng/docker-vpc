@@ -49,8 +49,7 @@ const AppShell = ({child, currentService}) => {
         {desktopOpened ? Object.keys(navigationMenu[currentService]).map((label, index) => (
           
           navigationMenu[currentService][label].type == "non-collapsible" ? 
-            <NavLink 
-              // component='button'
+            <NavLink               
               component={Link}
               to={navigationMenu[currentService][label].route}
               key={index}
@@ -65,8 +64,7 @@ const AppShell = ({child, currentService}) => {
               {Object.keys(navigationMenu[currentService][label]).map((sublabel, ind) => {
                 if (sublabel == "type" || sublabel == "route") return
 
-                return(<NavLink 
-                  // component='button'
+                return(<NavLink                   
                   component={Link}
                   to={navigationMenu[currentService][label].route +  "/" + navigationMenu[currentService][label][sublabel].route}
                   key={ind}
