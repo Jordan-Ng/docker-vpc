@@ -2,80 +2,47 @@ import React, {useState, useEffect} from "react"
 import {Text, Space, Anchor, Timeline, Grid, Tabs, Flex, Loader, Center, Button} from "@mantine/core"
 import { IconTerminal, IconBrandDocker, IconCheck } from "@tabler/icons-react"
 import {Terminal, CodeViewer} from "../../components"
-import fx from "../../helpers/fx"
-import { useLocation } from "react-router-dom"
+
+import useEC2NewInstanceProvision_hooks from "../../helpers/hooks/EC2/newInstanceProvision"
 
 
 const NewInstanceProvision = () => {
-    const [checkpoint, setCheckpoint] = useState(1)
-    const [fileReady, setFileReady] = useState(false)
-    const [userTampered, setUserTampered] = useState(false)
-    const location=useLocation()
-    const instructions ={
-        "1":{
-            commands: {
-              command: "docker",
-              args: ["buildx", "build", "-t", location.state.data.instanceName, `./machine_images/${location.state.data.instanceName}`]
-            },
-            message: "[docker-vpc] ====== Building image from dockerfile.. ======"
-            },
-        "2":{
-            commands : {
-              command: "docker",
-              args: ["container", "create", "-it" ,"--name", location.state.data.instanceName, "--label", "type=virtual_instance" , location.state.data.image]
-            },
-            message: "[docker-vpc] ====== Creating Container Instance.. ======"
-            },
-        "3" : {
-            commands : {
-                command: "",
-                args : []
-            },
-            message: "[docker-vpc] Container provisioned succesfully!"
-        }
-    }    
-
-    useEffect(() => {        
-
-        const prepareDockerfile = async (data) => {
-            try {
-                const dockerFileLocation = `./machine_images/${data.instanceName}/Dockerfile`
-                await fx.base.exec(`mkdir ./machine_images/${data.instanceName}`)
-                await fx.base.exec(`touch ${dockerFileLocation}`)
     
-                const dockerfileScript = 
-    `FROM ${data.image}
-    LABEL name=${data.instanceName}
-    LABEL cpu=${data.instanceType.vCPU}
-    LABEL memory=${data.instanceType.memory}
-    LABEL container_type=vm_instance
+    const {location, checkpoint, instructions, fileReady, userTampered, setCheckpoint, prepareDockerfile} = useEC2NewInstanceProvision_hooks()
     
-    # COPY PHASE
-    # ADD PHASE
-    # RUN PHASE (bootstrap scripts)
-    
-    ${data.allowHTTP ? "EXPOSE 80" : ""}
-    ${data.allowHTTPS ? "EXPOSE 443" : ""}
-    
-    CMD ["/bin/bash"]
-    `   
-                
-                await fx.base.exec(`echo "${dockerfileScript}" > ${dockerFileLocation}`)
-                setFileReady(true)    
+    // const instructions ={
+    //     "1":{
+    //         commands: {
+    //           command: "docker",
+    //           args: ["buildx", "build", "-t", location.state.data.instanceName, `./machine_images/${location.state.data.instanceName}`]
+    //         },
+    //         message: "[docker-vpc] ====== Building image from dockerfile.. ======"
+    //         },
+    //     "2":{
+    //         commands : {
+    //           command: "docker",
+    //           args: ["container", "create", "-it", 
+    //           ...location.state.data.network ? ["--network", location.state.data.network] : "" ,
+    //           ...location.state.data.volume ? ["-v", `${location.state.data.volume}:/home`] : "",
+    //           ...location.state.data.portMappings.flatMap(mapObj => ['-p', `${mapObj.from}:${mapObj.to}`]),
+    //           "--name", location.state.data.instanceName, 
+    //           "--label", "type=virtual_instance" , location.state.data.image]
+    //         },
+    //         message: "[docker-vpc] ====== Creating Container Instance.. ======"
+    //         },
+    //     "3" : {
+    //         commands : {
+    //             command: "",
+    //             args : []
+    //         },
+    //         message: "[docker-vpc] Container provisioned succesfully!"
+    //     }
+    // }    
 
-            } catch {
-                setUserTampered(true)
-            }
-        }
-
+    useEffect(() => {                     
         prepareDockerfile(location.state.data)
     },[])
 
-    useEffect(() => {
-        if (userTampered){
-            fx.base.exec(`./bin/instance_cleanup.sh ${location.state.data.instanceName}`)
-        }
-    },[userTampered])
 
     return(
         <>        
@@ -87,7 +54,7 @@ const NewInstanceProvision = () => {
                 </Center> : <Grid>
 
                 <Grid.Col span={12} style={{display: "flex" , justifyContent:"center"}}>
-                    {checkpoint == 3 ? 
+                    {checkpoint == Object.keys(instructions).length ? 
                     <Flex><IconCheck style={{width: "15px", height: "15px"}} color="green"/><Space w="sm"/><Text size="sm">Provisioning Complete! <Anchor href="/" underline="hover">View Dashboard</Anchor></Text></Flex> :
                     <Flex><Loader size="sm" /><Space w="sm"/><Text size="sm">Provisioning in Progress. Please do not refresh this page!</Text></Flex>
                     }
@@ -105,6 +72,10 @@ const NewInstanceProvision = () => {
 
                         <Timeline.Item title="Provisioning Instance" lineVariant="dashed">
                             <Text c="dimmed" size="sm">Creating Container from AMI</Text>
+                        </Timeline.Item>
+
+                        <Timeline.Item title="Starting Instance" lineVariant="dashed">
+                            <Text c="dimmed" size="sm">Starting Created Container</Text>
                         </Timeline.Item>
 
                         <Timeline.Item title="Done!" lineVariant="dashed">                            

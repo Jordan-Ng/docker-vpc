@@ -9,3 +9,4 @@ export {default as CodeViewer} from "./CodeViewer"
 
 export {default as DeleteConfirmationModal} from "./composite/DeleteConfirmationModal"
 export {default as UserScriptForm} from "./composite/UserScriptForm"
+export {default as PortMapper} from "./composite/PortMapper"

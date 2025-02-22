@@ -1,126 +1,35 @@
-import React, {useState, useEffect, useRef} from "react"
-import {Container, Text, TextInput, SimpleGrid, Select, Textarea, Button, Group, Space, Checkbox, Badge, Pill, Loader} from "@mantine/core"
+import React, {useEffect, useRef} from "react"
+import {Container, Text, TextInput, SimpleGrid, Select, MultiSelect, TagsInput, Textarea, Button, Group, Space, Checkbox, Badge, Pill, Loader} from "@mantine/core"
+import {Card, PortMapper, UserScriptForm} from "../../components"
 import {IconCheck, IconX} from "@tabler/icons-react"
-import {Card, Input, UserScriptForm} from "../../components"
-import INSTANCE_TYPES from "../../constants/INSTANCE_TYPES.json"
-import fx from "../../helpers/fx"
-import { Link, useNavigate } from "react-router-dom"
+import useEC2Creation_hooks from "../../helpers/hooks/EC2/createInstance"
 
 const CreateInstances = () => {
+    
     const userScriptRef = useRef()
-    const [instanceTypes, setInstanceTypes] = useState({})
-    const [timer, setTimer] = useState(null)
-    const navigate=useNavigate()
+    const {
+        isValidName, 
+        summary, 
+        portMappings,
+        options, 
+        addPortError,
+        handleTextChange, 
+        populateInputOptions, 
+        handleSelect,
+        handleAdditionalPortSelection,
+        handleRemoveAdditionalPort,
+        handleChangePortMapping,
+        handleAddEntryPointCommand,
+        handleNetworkChange,
+        handleFormSubmit        
+    } = useEC2Creation_hooks()
 
-    const [validName, setValidName] = useState(undefined)
-    
-
-    const [summary, setSummary] = useState({
-        instanceName : undefined,
-        image: undefined,
-        instanceType: undefined,
-        volume: undefined,
-        allowHTTP: false,
-        allowHTTPS: false
-    })
-    
-    const [options, setOptions] = useState({
-        name: undefined,
-        images: undefined,
-        ami: undefined,
-        instance_types : INSTANCE_TYPES,
-        volume: undefined
-    })    
-
-    useEffect(() => {      
-        const catalog = {}
-
-        // create object catalog for all instance types
-        Object.keys(INSTANCE_TYPES).map(fam => {
-            INSTANCE_TYPES[fam].forEach((instType, ind) => {
-                catalog[instType["Instance Size"]] = {
-                    ...INSTANCE_TYPES[fam][ind],
-                    family : fam
-                }
-            })
-        })
-
-            
-        let availableVolumes 
-        fx.volume.list().then(data => {
-            availableVolumes = JSON.parse(data).map(vol => vol["name"])            
-        })
-
-        // populate select input for images
-        fx.ec2.list_os_images().then(os_imgs => {
-            const os_images = JSON.parse(os_imgs)
-            const ami = [];
-            const images = [];
-            
-            os_images.forEach(os_image => {
-                const img_name = os_image.repo[0].split(":")[0] 
-                
-                if (img_name == "hello-world") return
-                
-                if (os_image.labels?.isAMI){
-                    ami.push(img_name)
-                    return
-                }
-                images.push(img_name)
-            })        
-            
-            setInstanceTypes(catalog)  
-            setOptions({
-                ...options,
-                ami,
-                images,
-                volume : availableVolumes
-            })
-        }) 
-
-    }, [])
-
-    const handleTextChange = (e) => {         
-        
-        setValidName(undefined)
-        setSummary({
-            ...summary,
-            instanceName: e.target.value.replace(/\s+/g, '-')
-        })
-
-        clearTimeout(timer)
-
-        const newTimer = setTimeout(async () => {            
-             setValidName(await fx.ec2.is_valid_instance_name(e.target.value.replace(/\s+/g, '-')) && e.target.value.length >= 3)
-            
-        }, 1000)
-
-        setTimer(newTimer)
-    }
-    
-
-    const handleSelect = (val, opt, field) => {
-        
-        const newState = {
-            ...summary
-        }
-        
-        newState[field] = val
-
-        if (field === "instanceType") {            
-            newState[field] = instanceTypes[val]
-
-            if (!instanceTypes[val]["EBS Only"]){
-                newState.volume = null
-            }
-        }
-
-        
-        setSummary(newState)        
-    }
+    useEffect(() => {             
+        populateInputOptions()
+    },[])    
 
     return(
-        <Container>            
+        <Container>
             <Text size="lg" fw={500}>Launch an instance</Text>
             <Text size="sm">Create containers that run in your private docker environment. Quickly get started by following the simple steps below.</Text>
 
@@ -133,220 +42,279 @@ const CreateInstances = () => {
                             title: "Name and Tags",                    
                         }}
                     >
-                    <TextInput 
-                    label="Name" 
-                    placeholder='e.g. my-first-instance'
-                    value={summary.instanceName || ""}
-                    onChange={handleTextChange}
-                
-                    {...summary.instanceName === null || summary.instanceName?.length < 3 ?
-                        {error: "Please Enter a Valid Instance Name (min. 3 characters)"} :
-
-                        !validName && validName !== undefined ? 
-                        {error: "Instance Name Already Exists"} : {}
-                    }
+                        <TextInput 
+                        required
+                        label="Name" 
+                        placeholder='e.g. my-first-instance'
+                        onChange={handleTextChange}
+                        value={summary.instanceName || ""}
+                        
                     
-                    />
+                        {...summary.instanceName === null || summary.instanceName?.length < 3 ?
+                            {error: "Please Enter a Valid Instance Name (min. 3 characters)"} :
+
+                            !isValidName && isValidName !== undefined ? 
+                            {error: "Instance Name Already Exists"} : {}
+                        }
+                        
+                        />
                     </Card>
+                    
+                    <Space h="sm"/>
 
                     <Card 
                         props = {{
-                            title: "Application and OS Images (Docker Images)",
-                            style: {
-                                marginTop: "20px"
-                            }                    
+                            title: "Application and OS Images (Docker Images)",                                                
                         }}
                     >
-                    <Select 
-                        data={[
-                            { group: "Base Images", items: options.images || [] },
-                            { group: "AMI", items: options.ami || []}                           
-                        ]}
-                        placeholder="select an option"
-                        onChange={(val, opt) => handleSelect(val, opt, "image")}     
-                        {...summary.image === null ? {error: "Please select an option"} : {}}                        
+                        <Select 
+                            label="Base Image"
+                            required
+                            data={[
+                                { group: "Base Images", items: options.images || [] },
+                                { group: "AMI", items: options.ami || []}                           
+                            ]}
+                            placeholder="select an option"
+                            onChange={(val, opt) => handleSelect(val, opt, "image")}     
+                            {...summary.image === null ? {error: "Please select an option"} : {}}                        
 
-                    />
+                        />
                     </Card>
+                    
+                    <Space h="sm"/>
 
                     <Card 
                         props = {{
-                            title: "Instance Type",
-                            style: {
-                                marginTop: "20px"
-                            }                    
+                            title: "Instance Type"                                               
                         }}
                     >
-                    <Select 
-                        data={Object.keys(options.instance_types).map(key => ({
-                            group: key,
-                            items: options.instance_types[key].map(obj => obj["Instance Size"])
-                        }))}
-                        placeholder="select an option"                        
-                        onChange={(val, opt) => handleSelect(val, opt, "instanceType")}
-                        {...summary.instanceType === null ? {error: "Please select an option"} : {}}                        
-                    />
+                        <Select 
+                            label="Instance Type"
+                            required
+                            data={Object.keys(options.instance_types).map(key => ({
+                                group: key,
+                                items: options.instance_types[key].map(obj => obj["Instance Size"])
+                            }))}
+                            placeholder="select an option"                        
+                            onChange={(val, opt) => handleSelect(val, opt, "instanceType")}
+                            {...summary.instanceType === null ? {error: "Please select an option"} : {}}                        
+                        />
 
                     </Card>
+                    
+                    <Space h="sm"/>
 
                     <Card 
                         props = {{ 
-                            title: "Configure Storage",
-                            style: {
-                                marginTop: "20px"
-                            }      
+                            title: "Configure Storage"                                  
                         }}
                     >
-                    <Select 
-                        disabled = {summary.instanceType == undefined ? true : !summary.instanceType["EBS Only"] }
-                        placeholder={summary.instanceType ? !summary.instanceType["EBS Only"] ? "Persistent Only" : "Select an Option" : "No Information"}
-                        data = {options.volume}  
-                        value = {summary.volume}                      
-                        onChange={(val, opt) => handleSelect(val, opt, "volume")}
-                        {...summary.volume === null && summary.instanceType?.["EBS Only"] ? {error: "Please select an option"} : {}}
-                    />
-                    </Card>
-
-                    <Card 
-                        props = {{
-                            title: "Network Settings",
-                            style: {
-                                marginTop: "20px"
-                            }      
-                        }}
-                    >
-                    <TextInput label="Network (Docker Bridge)" disabled placeholder="Coming Soon .."/>
-                    <Space h="sm"/>                    
-                            <Group style={{alignItems: "baseline"}}>
-                            <Checkbox.Indicator
-                                checked={summary.allowHTTP} 
-                                onClick={() => handleSelect(!summary.allowHTTP, "" , "allowHTTP")}
-                            />
-                            <div>
-                                <Text size="sm">Allow HTTPS traffic from the internet</Text>
-                                <Text size="xs" c="gray">Expose ports 443, 8443</Text>                            
-                            </div>
-                            </Group>
-                    <Space h="sm"/>
-                    
-                    <Group style={{alignItems: "baseline"}}>
-                        <Checkbox.Indicator 
-                            checked={summary.allowHTTPS} 
-                            onClick={() => handleSelect(!summary.allowHTTPS, "" , "allowHTTPS")}
+                        <Select 
+                            label="Storage"
+                            disabled = {summary.instanceType == undefined ? true : !summary.instanceType["EBS Only"] }
+                            placeholder={summary.instanceType ? !summary.instanceType["EBS Only"] ? "Persistent Only" : "Select an Option" : "No Information"}
+                            data = {options.volume}  
+                            value = {summary.volume}                      
+                            onChange={(val, opt) => handleSelect(val, opt, "volume")}
+                            {...summary.volume === null && summary.instanceType?.["EBS Only"] ? {error: "Please select an option"} : {}}
                         />
-                        <div>
-                            <Text size="sm">Allow HTTP traffic from the internet</Text>
-                            <Text size="xs" c="gray">Expose port 80</Text>                            
-                        </div>
-                    </Group>
-
+                        <Text size="xs" c="gray">If applicable, Mountpoint will be /home</Text>  
                     </Card>
+                    
+                    <Space h="sm"/>
 
                     <Card 
                         props = {{
-                            title: "User Data - optional",
-                            style: {
-                                // marginTop: "20px"
-                            }      
+                            title: "User Data - optional"                            
                         }}
                     >                    
-                    <UserScriptForm                         
-                        ref = {userScriptRef}
-                    />
+                        <UserScriptForm                         
+                            ref = {userScriptRef}
+                        />
                     </Card>
 
-                </div>
-                
-                <div>
-                    <Space h="lg"/>
-                    <Card
-                        props={{
-                            title: "Summary"                            
+                    <Space h="sm"/>
+
+                    <Card 
+                        props = {{
+                            title: "Network Settings",                                
                         }}
                     >
-                        <Group>
-                        <Text c="blue" size="sm" fw={700} >Instance Name</Text>
-                        {/* REFACTOR ME! */}
-                        {summary.instanceName && validName == undefined ? <Loader size={15} color="yellow" type="dots" /> : ""}
-                        {summary.instanceName && validName != undefined ? validName ? <IconCheck size={15} color="green"/> : <IconX size={15} color="red"/> : "" }
+                    
+                        <Select 
+                            label = "Network to attach this instance to"
+                            placeholder = "(default: bridge)"
+                            // placeholder
+                            data = {options.networks}
+                            onChange={handleNetworkChange}
+                            value={summary.network}
+                            searchable
+                        />
                         
-                        </Group>
-                        <Text size="sm">{summary.instanceName}</Text>
-
-                        <Text c="blue" size="sm" fw={700} style={{marginTop: "20px"}}>Software Image (AMI)</Text>
-                        <Text size="sm">{summary.image}</Text>
-
+                        <Space h="xl"/>                    
+                                <Group style={{alignItems: "baseline"}}>
+                                <Checkbox.Indicator
+                                    checked={summary.allowHTTP} 
+                                    onClick={() => handleSelect(!summary.allowHTTP, "" , "allowHTTP")}
+                                />
+                                <div>
+                                    <Text size="sm">Allow HTTPS traffic from the internet</Text>
+                                    <Text size="xs" c="gray">Expose ports 443, 8443</Text>                            
+                                </div>
+                                </Group>
+                        <Space h="sm"/>
                         
-                        <Group>
+                        <Group style={{alignItems: "baseline"}}>
+                            <Checkbox.Indicator 
+                                checked={summary.allowHTTPS} 
+                                onClick={() => handleSelect(!summary.allowHTTPS, "" , "allowHTTPS")}
+                            />
                             <div>
-                                <Text c="blue" size="sm" fw={700} style={{marginTop: "20px"}}>Instance Type</Text>
-                                <Text size="sm">{summary.instanceType && summary.instanceType["Instance Size"]}</Text>
-                            </div>
-
-                            <div style={{margin: "20px 0 0 20px"}}>
-                                <Text c="blue" size="sm" fw={700} >vCPU</Text>
-                                <Text size="sm">{summary.instanceType && summary.instanceType["vCPU"]}</Text>
-                            </div>
-
-                            <div style={{margin: "20px 0 0 20px"}}>
-                                <Text c="blue" size="sm" fw={700} >Memory</Text>
-                                <Text size="sm">{summary.instanceType && summary.instanceType["Memory"] + "g"}</Text>
+                                <Text size="sm">Allow HTTP traffic from the internet</Text>
+                                <Text size="xs" c="gray">Expose port 80</Text>                            
                             </div>
                         </Group>
 
-                        <Text c="blue" size="sm" fw={700} style={{marginTop: "20px"}}>Storage (volumes)</Text>
-                        <Space h="xs"/>
-                        <Group>
-                            {summary.instanceType ?
-                            <>
-                                <Badge color={summary.instanceType["EBS Only"] ? "yellow"  : "purple" }>{summary.instanceType["EBS Only"] ? "EBS"  : "DISK"}</Badge>
-                                <Text size="xs">{summary.instanceType["EBS Only"] ? summary.volume : summary.instanceType["Instance Storage"]  }</Text>
-                            </> : ""}
-                        </Group>
-                        
-                        <Space h="xl"/>
-                        <Group>
-                            {summary.allowHTTP ? <Pill withRemoveButton onRemove={() => handleSelect(!summary.allowHTTP, "", "allowHTTP")}>AllowHTTP</Pill> : ""}            
-                            {summary.allowHTTPS ? <Pill withRemoveButton onRemove={() => handleSelect(!summary.allowHTTPS, "", "allowHTTPS")}>AllowHTTPS</Pill> : ""}            
-                        </Group>
+                        <Space h="sm"/>
 
-                        <Space h="xl"/>
-                        <Space h="xl"/>
-                        <Button fullWidth onClick={() => {
-                            const emptyFields= Object.keys(summary)
-                                .filter(field => summary[field] == undefined)
-                            
-                            if (emptyFields.length > 0){
-                                const invalidFormObject = {}
-                                for (let field of emptyFields) {
-                                    invalidFormObject[field] = null
-                                    // console.log(field)
-                                }
-                                const inValidFields ={
-                                    ...summary,                                
-                                    ...invalidFormObject
-                                } 
-                                setSummary(inValidFields)
-                                return
-                            }
+                        <TagsInput 
+                            label="Expose additional ports"
+                            description="expose additional ports on the instance"
+                            onChange={handleAdditionalPortSelection}
+                            acceptValueOnBlur={false}
+                            value={summary.additionalPorts}
+                            error={addPortError.error && addPortError.message}                        
+                        />
 
+                    </Card>
 
-                            // console.log("invalid fields", inValidFields)
-                            navigate(`/instance/create/${summary.instanceName}`, {state: {
-                                data: {
-                                    ...summary,
-                                    validName,
-                                    userScripts: userScriptRef.current.getUserScripts()
-                                }
-                            }})
-                            // const scripts = userScriptRef.current.getUserScripts()
-                            // console.log(scripts)
-                        }}>Launch Instance</Button>                        
+                    <Space h="sm"/>
+
+                    <Card 
+                        props = {{
+                            title: "Port Mappings"                              
+                        }}
+                    >            
+                        <Text size="xs" c="dimmed">Map host to instance ports</Text>        
+
+                        <Space h="sm"/>
+
+                        <PortMapper                             
+                            handleAdd={() => handleChangePortMapping("", "", "", "new")}
+                            handleChange={(e,id,field) => handleChangePortMapping(e, id, field, "update")}
+                            handleRemove={(id) => handleChangePortMapping("", id, "", "remove")}
+                            store={portMappings}
+                        />                    
                     </Card>
                     
+                    <Space h="sm"/>
+                    <Card
+                        props={{
+                            title: "Entrypoint"                            
+                        }}
+                    >
+                        <TextInput 
+                            required
+                            label="Entrypoint Command"
+                            placeholder="i.e npm start"
+                            description="command to run on instance startup"
+                            onChange={handleAddEntryPointCommand}
+                            {...summary.entrypoint === null ? {error: "Please Enter a command to run on instance startup"} : ""}
+                        />
+                    </Card>
+                </div>
+            {/* =================================================================== */}
+                <div>
+                        <Space h="lg"/>
+
+                        <Card
+                            props={{
+                                title: "Summary"
+                            }}                        
+                        >
+                            <Group>
+                                
+                                <Text c="blue" size="sm" fw={700} >Instance Name</Text>
+                                
+                                {/* REFACTOR ME! */}
+                                {summary.instanceName && isValidName == undefined ? <Loader size={15} color="yellow" type="dots" /> : ""}
+                                {summary.instanceName && isValidName != undefined ? isValidName ? <IconCheck size={15} color="green"/> : <IconX size={15} color="red"/> : "" }
+                            </Group>
+                                
+                            <Text size="sm">{summary.instanceName}</Text>
+                            <Text c="blue" size="sm" fw={700} style={{marginTop: "20px"}}>Software Image (AMI)</Text>
+                            <Text size="sm">{summary.image}</Text>
+
+                            <Group>
+                                <div>
+                                    <Text c="blue" size="sm" fw={700} style={{marginTop: "20px"}}>Instance Type</Text>
+                                    <Text size="sm">{summary.instanceType && summary.instanceType["Instance Size"]}</Text>
+                                </div>
+
+                                <div style={{margin: "20px 0 0 20px"}}>
+                                    <Text c="blue" size="sm" fw={700} >vCPU</Text>
+                                    <Text size="sm">{summary.instanceType && summary.instanceType["vCPU"]}</Text>
+                                </div>
+
+                                <div style={{margin: "20px 0 0 20px"}}>
+                                    <Text c="blue" size="sm" fw={700} >Memory</Text>
+                                    <Text size="sm">{summary.instanceType && summary.instanceType["Memory"] + "g"}</Text>
+                                </div>
+                            </Group>
+
+                            <Text c="blue" size="sm" fw={700} style={{marginTop: "20px"}}>Storage (volumes)</Text>
+                            
+                            <Space h="xs"/>
+                            
+                            <Group>
+                                {summary.instanceType ?
+                                <>
+                                    <Badge color={summary.instanceType["EBS Only"] ? "yellow"  : "purple" }>{summary.instanceType["EBS Only"] ? "EBS"  : "DISK"}</Badge>
+                                    {/* <Text size="xs">{summary.instanceType["EBS Only"] ? summary.volume.join(", ") : summary.instanceType["Instance Storage"]  }</Text> */}
+                                    <Text size="xs">{summary.instanceType["EBS Only"] ? summary.volume : summary.instanceType["Instance Storage"]  }</Text>
+                                </> : ""}
+                            </Group>
+
+                            <Space h="xs"/>
+
+                            <Text c="blue" size="sm" fw={700}>Networks</Text>
+                            <Space h="xs"/>
+                            <Group>
+                                {/* {summary.networks && summary.networks.map((n,ind) => <Pill key={ind}>{n}</Pill>)} */}
+                                {summary.network && <Pill>{summary.network}</Pill>}
+                            </Group>
+                            <Space h="xs"/>
+
+                            <Text c="blue" size="sm" fw={700}>Ports Exposed</Text>
+                            <Space h="xs"/>
+                            <Group>
+                                {summary.allowHTTP ? <Pill withRemoveButton onRemove={() => handleSelect(!summary.allowHTTP, "", "allowHTTP")}>HTTP (80)</Pill> : ""}            
+                                {summary.allowHTTPS ? <Pill withRemoveButton onRemove={() => handleSelect(!summary.allowHTTPS, "", "allowHTTPS")}>HTTPS (443, 8443)</Pill> : ""}            
+                                {summary.additionalPorts.map((port,ind) => <Pill withRemoveButton onRemove={() => handleRemoveAdditionalPort(port)} key={ind}>{port}</Pill>)}
+                            </Group>
+
+                            <Space h="xs"/>
+
+                            <Text c="blue" size="sm" fw={700}>Port Mappings</Text>
+                            <Group>
+                                {portMappings.map((pm, ind) => <Pill key={ind}>{pm.from} : {pm.to}</Pill>)}                                
+                            </Group>
+                            
+                            <Space h="xs"/>
+                            <Text c="blue" size="sm" fw={700}>Entrypoint Command</Text>
+                            <Text size='xs'>{summary.entrypoint}</Text>
+
+
+
+                            <Space h="xl"/>
+                            <Space h="xl"/>
+
+                            <Button fullWidth onClick={() => handleFormSubmit(userScriptRef)}>Launch Instance</Button>
+                        </Card>
                 </div>
             </SimpleGrid>
         </Container>
+
     )
 }
 

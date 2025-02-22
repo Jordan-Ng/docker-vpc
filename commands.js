@@ -96,6 +96,11 @@ const commands = {
         )
     },
 
+    "ec2:list_networks" : {
+        description: "list available networks on docker",
+        command: "docker network ls --format '{{json .}}' | jq '{name: .Name, driver: .Driver}' |jq -s '.'"
+    },
+
     "ec2:cat_dockerfile:fx" : {
         description: "list contents of dockerfile to stdout",
         command: (pathName) => {            

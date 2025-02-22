@@ -7,8 +7,7 @@ const CodeViewer = ({instanceName}) => {
 
     useEffect(() => {        
         fx.ec2.cat_dockerfile(["machine_images", instanceName ,"Dockerfile"])
-        .then(data => {
-            // console.log("dockerfile",)
+        .then(data => {            
             setDockerfile(data.out)})
         .catch((err) => {
             console.log(err)

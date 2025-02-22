@@ -2,7 +2,8 @@
 before_pids=$(pgrep -x Terminal)
 
 temp_script=$(mktemp /tmp/target_script.docker_ssh)
-start_instance_instruction="docker start -i $1"
+# start_instance_instruction="docker start -i $1"
+start_instance_instruction="docker exec -it $1 /bin/bash"
 welcome_prompt="echo 'connecting to instance $1 ..'"
 
 # populating temp script
@@ -33,8 +34,8 @@ while :;
                 echo "Terminal Process has exited, initiating cleanup.."
                 sleep 1
 
-                echo "Stopping $1..."            
-                docker stop $1 > /dev/null
+                # echo "Stopping $1..."            
+                # docker stop $1 > /dev/null
 
                 echo "Removing $1's temporary script..."
                 sleep 1

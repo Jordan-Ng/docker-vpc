@@ -103,6 +103,12 @@ const fx = {
             .catch(err => console.log("list_os_image", err))
         },
 
+        list_networks: () => {
+            return exec(commands["ec2:list_networks"].command)
+            .then(data => data.out)
+            .catch(err => console.log("list_networkk", err))
+        },
+
         is_valid_instance_name: (volName) => {
             return exec(commands["ec2:get_container_information:fx"].command(volName))
             .then((data) => false)

@@ -13,6 +13,7 @@ const navigationMenu = {
             route: "/",
             // component : (props) =>  <EC2Dashboard {...props}/>
             component : <EC2Dashboard />
+            // component: <NewInstanceProvision />
         },
         "Instances" : {
             type: type.collapsible,
@@ -24,7 +25,8 @@ const navigationMenu = {
                 childRoutes: {
                     "New Instance Provision" : {
                         type: type.nonCollapsible,
-                        route: ":instance_name",
+                        // route: ":instance_name",
+                        route: "new",
                         component : <NewInstanceProvision />,
                     }
                 }

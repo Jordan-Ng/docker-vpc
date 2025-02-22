@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react"
 
-import {Alert, Kbd, Space, Loader, Button, Badge, Box, LoadingOverlay, Text, Container } from "@mantine/core"
+import {Alert, Kbd, Space, Loader, Button, Badge, Box, LoadingOverlay, Text, Container, Flex } from "@mantine/core"
 import {IconInfoCircle, IconRefresh, IconTrash, IconAlertTriangle} from "@tabler/icons-react"
 
 import {Table, ActionIcon, Modal, DeleteConfirmationModal} from "../../components"
@@ -12,6 +12,24 @@ const Dashboard = () => {
     const [isVisible, setIsVisible] = useState(true)    
     const [selectedRows, setSelectedRows] = useState([])
     const [message, setMessage] = useState("")
+
+    const startInstance = async (data) => {
+        fx.base.exec(`docker start ${data["Names"]}`)
+        .then( exitObj => {if (exitObj.exitStatus == 0){
+            fx.base.notify(true,{message: `${exitObj.out.trim()} started`})            
+            getInstances()
+        }})
+    }
+
+    const stopInstance = async(data) => {
+        fx.base.exec(`docker stop ${data["Names"]}`)
+        .then( exitObj  => {
+            if (exitObj.exitStatus == 0){
+                fx.base.notify(true, {message: `Stopped ${exitObj.out.trim()}`})
+                getInstances()
+            }
+        })
+    }
 
     const getInstances = async () => {        
         const data = await fx.ec2.list_instances()    
@@ -30,7 +48,7 @@ const Dashboard = () => {
             name: dt["Names"],
             state: <Badge color={dt["State"] == "exited" ? "yellow" : "blue"}>{dt["State"]}</Badge>,
             networks: dt["Networks"],
-            action: <Button size="xs" onClick={async() => {
+            action: dt["State"] == "running" ? <Flex><Button size="xs" onClick={async() => {
                  
                     setIsVisible(!isVisible)
 
@@ -40,7 +58,12 @@ const Dashboard = () => {
                         data => setMessage(data),   // onStdout handler
                         
                         () => (setMessage("") , setIsVisible(true))) // onExit handler                
-                }}>Connect</Button>    
+                }}>Connect</Button>
+                <Space w="xs"/>
+                <Button size="xs" color="red" onClick={() => stopInstance(dt)}>Stop</Button>
+                </Flex>  : 
+                
+                <Button size="xs" onClick={() => startInstance(dt)}>Start</Button>                                
         })))        
     }
 
