@@ -118,7 +118,7 @@ const CreateInstances = () => {
                             onChange={(val, opt) => handleSelect(val, opt, "volume")}
                             {...summary.volume === null && summary.instanceType?.["EBS Only"] ? {error: "Please select an option"} : {}}
                         />
-                        <Text size="xs" c="gray">If applicable, Mountpoint will be /home</Text>  
+                        <Text size="xs" c="gray">Mountpoint will be in instance's /home/vol</Text>  
                     </Card>
                     
                     <Space h="sm"/>

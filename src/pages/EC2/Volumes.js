@@ -118,14 +118,14 @@ const Volumes = () => {
                             if (responseObj.exitStatus == 0){
                                 setSelectedRows([])
 
-                                fx.base.notify({
+                                fx.base.notify(true, {
                                     title: "Great Success!",
                                     message: "Volume(s) deleted successfully"
                                 })
                             }
                             
                             else {
-                                fx.base.notify({
+                                fx.base.notify(false, {
                                     title: "Sum Ting Wong",
                                     message: "Oh oh .. we're in trouble .."
                                 })
