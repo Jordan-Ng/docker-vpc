@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react"
 
-import {Alert, Kbd, Space, Loader, Button, Badge, Box, LoadingOverlay, Text, Container, Flex } from "@mantine/core"
+import {Alert, Kbd, Space, Loader, Button, Badge, Box, LoadingOverlay, Text, Container, Flex, Tooltip } from "@mantine/core"
 import {IconInfoCircle, IconRefresh, IconTrash, IconAlertTriangle} from "@tabler/icons-react"
 
 import {Table, ActionIcon, Modal, DeleteConfirmationModal} from "../../components"
@@ -17,7 +17,9 @@ const Dashboard = () => {
         fx.base.exec(`docker start ${data["Names"]}`)
         .then( exitObj => {if (exitObj.exitStatus == 0){
             fx.base.notify(true,{message: `${exitObj.out.trim()} started`})            
-            getInstances()
+            // setting timeout so that ephemeral containers have enough time to exit before 
+            // getting updated instances information
+            setTimeout(getInstances, 1000)
         }})
     }
 
@@ -72,7 +74,7 @@ const Dashboard = () => {
     }, [isVisible])
 
     return(        
-            <Box pos="relative" style={{height: "800px"}}>
+            <Box>
                 <LoadingOverlay visible={!isVisible} overlayProps={{blur: 2}} loaderProps={{children: 
                     <div>
                         <Text fw={500}><Loader size="xs" mr="sm"/> 
@@ -96,51 +98,60 @@ const Dashboard = () => {
                     }}/>
             {instances ?  <Container>
             
-            <div style={{marginBottom: "20px", display: "flex", justifyContent: "end"}}>
-                <ActionIcon 
-                    props={{
-                        color: "cyan",
-                        callback : getInstances,                        
-                        icon: IconRefresh ,
-                        iconStyle: {
-                            width: '60%',
-                            height: '60%'
-                        },
-                        onClick: getInstances
-                    }}
-                />
-                <Modal 
-                    props = {{                        
-                        child: DeleteConfirmationModal,
-                        childState: {
-                            state : selectedRows,
-                            setState : setSelectedRows
-                        },
-                        
-                        onClickHandler: async () => {
-                            fx.ec2.delete_instances(selectedRows)
-                            .then(() => getInstances().then(() => {
-                                fx.base.notify("success", {
-                                title: "Great Success!",
-                                message: "Instance(s) deleted successfully"})
+            <div style={{marginBottom: "20px", display: "flex", justifyContent: "space-between"}}>
+                <div style={{ display: "flex", alignItems: "end"}}>
+                    <Tooltip multiline w={500} position="right-end" color="blue" label="Clicked start but instance not running? You might have an ephemeral instance. Please review the generated dockerfile document">
+                        <IconInfoCircle size={20} color="gray"/>
+                    </Tooltip>
+                </div>
+                <div style={{display: "flex"}}>
+                    <div style={{display: "flex"}}>
+                    <ActionIcon 
+                        props={{
+                            color: "cyan",
+                            callback : getInstances,                        
+                            icon: IconRefresh ,
+                            iconStyle: {
+                                width: '60%',
+                                height: '60%'
+                            },
+                            onClick: getInstances
+                        }}
+                    />
+                    </div>
+                    <Modal 
+                        props = {{                        
+                            child: DeleteConfirmationModal,
+                            childState: {
+                                state : selectedRows,
+                                setState : setSelectedRows
+                            },
+                            
+                            onClickHandler: async () => {
+                                fx.ec2.delete_instances(selectedRows)
+                                .then(() => getInstances().then(() => {
+                                    fx.base.notify("success", {
+                                    title: "Great Success!",
+                                    message: "Instance(s) deleted successfully"})
 
-                                setSelectedRows([])
-                            })
-                            )
-                            .catch(
-                                errMsg => fx.base.notify("error", {
-                                    title: "Sum Ting Wong",
-                                    message: errMsg
+                                    setSelectedRows([])
                                 })
-                            )
-                                                            
-                        },
-                        color: "red",
-                        rightIcon : <IconTrash />,
-                        buttonText : "Delete Instance(s)",
-                        buttonDisabled : selectedRows.length == 0
-                    }}
-                />
+                                )
+                                .catch(
+                                    errMsg => fx.base.notify("error", {
+                                        title: "Sum Ting Wong",
+                                        message: errMsg
+                                    })
+                                )
+                                                                
+                            },
+                            color: "red",
+                            rightIcon : <IconTrash />,
+                            buttonText : "Delete Instance(s)",
+                            buttonDisabled : selectedRows.length == 0
+                        }}
+                    />
+                </div>
             </div>
 
             <Table props={{

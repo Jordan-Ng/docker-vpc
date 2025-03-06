@@ -16,7 +16,8 @@ const App = () => {
         child={
           <Routes>            
 
-            {Object.keys(currentServicedRoutes).map((rt, ind) => {
+            {Object.keys(currentServicedRoutes).filter(key => key != "Name").map((rt, ind) => {              
+
               if (currentServicedRoutes[rt].type == "non-collapsible"){
                 return(
                   <Route 
@@ -56,6 +57,7 @@ const App = () => {
           </Routes>}
         
         currentService={currentService}
+        setCurrentService={setCurrentService}
       />      
     </>
     );

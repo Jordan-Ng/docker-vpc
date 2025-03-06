@@ -142,11 +142,7 @@ const UserScriptForm = forwardRef((props,ref) => {
             })
             return userScripts
         }
-    }))
-
-    useEffect(() => {
-        console.log(userScripts)
-    }, [userScripts])
+    }))    
 
     return(
         <>

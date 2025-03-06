@@ -75,6 +75,7 @@ const CreateInstances = () => {
                                 { group: "AMI", items: options.ami || []}                           
                             ]}
                             placeholder="select an option"
+                            value={summary.image}
                             onChange={(val, opt) => handleSelect(val, opt, "image")}     
                             {...summary.image === null ? {error: "Please select an option"} : {}}                        
 
@@ -95,6 +96,7 @@ const CreateInstances = () => {
                                 group: key,
                                 items: options.instance_types[key].map(obj => obj["Instance Size"])
                             }))}
+                            value={summary.instanceType["Instance Size"]}
                             placeholder="select an option"                        
                             onChange={(val, opt) => handleSelect(val, opt, "instanceType")}
                             {...summary.instanceType === null ? {error: "Please select an option"} : {}}                        
@@ -219,6 +221,7 @@ const CreateInstances = () => {
                             placeholder="i.e npm start"
                             description="command to run on instance startup"
                             onChange={handleAddEntryPointCommand}
+                            value={summary.entrypoint}
                             {...summary.entrypoint === null ? {error: "Please Enter a command to run on instance startup"} : ""}
                         />
                     </Card>
