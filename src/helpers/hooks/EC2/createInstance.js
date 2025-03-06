@@ -18,28 +18,29 @@ const useEC2Creation_hooks = () => {
     })
 
     const [summary, setSummary] = useState({
-        instanceName : "my-t1.micro",
-        image: "ubuntu:latest",
-        instanceType: {"Instance Size": "t1.micro",
-        "vCPU": 1,
-        "memory": 1,
-        "EBS Only" : true,            
-        "Instance Storage": "EBS-Only"},
-        volume: "poc-test",
-        allowHTTP: true,
-        allowHTTPS: true,
-        additionalPorts: ["8081"],        
-        network: "shared-poc",
-        entrypoint: ["npm", "start", "--prefix", "/root/dummy-express"]
-        // instanceName : undefined,
-        // image: undefined,
-        // instanceType: undefined,
-        // volume: undefined,
-        // allowHTTP: false,
-        // allowHTTPS: false,
-        // additionalPorts: [],        
-        // networks: undefined,
-        // entrypoint: undefined
+        // instanceName : "express-app",
+        // image: "ubuntu",
+        // instanceType: {"Instance Size": "t1.micro",
+        // "vCPU": 1,
+        // "Memory": 1,
+        // "EBS Only" : true,            
+        // "Instance Storage": "EBS-Only"},
+        // volume: "poc-test",
+        // allowHTTP: true,
+        // allowHTTPS: true,
+        // additionalPorts: ["8081"],        
+        // network: "shared-poc",
+        // entrypoint: ["npm", "start", "--prefix", "/root/dummy-express"]        
+
+        instanceName : undefined,
+        image: undefined,
+        instanceType: undefined,
+        volume: undefined,
+        allowHTTP: false,
+        allowHTTPS: false,
+        additionalPorts: [],        
+        networks: undefined,
+        entrypoint: undefined
     })
 
     const [options, setOptions] = useState({
@@ -205,9 +206,7 @@ const useEC2Creation_hooks = () => {
         })
     }
 
-    const handleFormSubmit = (userScriptRef) => {
-        // console.log(summary)
-        // console.log(userScriptRef.current.getUserScripts())
+    const handleFormSubmit = (userScriptRef) => {        
         
         const emptyFields= Object.keys(summary)
         .filter(field => summary[field] == undefined)
@@ -233,8 +232,6 @@ const useEC2Creation_hooks = () => {
                 userScripts: userScriptRef?.current.getUserScripts()
             }
         }})
-        // console.log(userScriptRef.current.getUserScripts())
-        // navigate('/instance/create/test', {state: {data: summary, userScripts: userScriptRef?.current.getUserScripts()}})
         
     }
 

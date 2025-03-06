@@ -1,6 +1,6 @@
 import React from 'react'
 import {EC2Dashboard, Volumes, InstanceTypes, CreateInstance, NewInstanceProvision} from '../pages'
-
+import {CreateLB, ProvisionLB, LBDashboard} from "../pages"
 const type = {
     collapsible: "collapsible",
     nonCollapsible: "non-collapsible"
@@ -8,12 +8,12 @@ const type = {
 
 const navigationMenu = {
     "EC2" : {
-        "EC2 Dashboard" : {
+        "Name": "Elastic Container Compute",
+        "Dashboard" : {
             type: type.nonCollapsible,
             route: "/",
             // component : (props) =>  <EC2Dashboard {...props}/>
-            component : <EC2Dashboard />
-            // component: <NewInstanceProvision />
+            component : <EC2Dashboard />            
         },
         "Instances" : {
             type: type.collapsible,
@@ -37,11 +37,36 @@ const navigationMenu = {
                 component: <InstanceTypes />
             }
         },
+        "Load Balancer" : {
+            type: type.collapsible,
+            route: "/load-balancer",
+            "Dashboard" : {
+                type: type.nonCollapsible,
+                route: "dashboard",
+                component: <LBDashboard />
+            },
+            "Create Load Balancer" : {
+                type: type.nonCollapsible,
+                route: "create",
+                component: <CreateLB />,
+                // component: <ProvisionLB />,
+                childRoutes: {
+                    "New Load Balancer Provision" : {
+                        type: type.nonCollapsible,
+                        route: "new",
+                        component: <ProvisionLB />
+                    }
+                }
+            }
+        },
         "Volumes": {
             type: type.nonCollapsible,
             route: "/volumes",
             component: <Volumes />
         }
+    },
+    "ALB" : {
+        "Name" : "Application Load Balancer"
     }
 }
 

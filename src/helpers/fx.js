@@ -138,8 +138,59 @@ const fx = {
 
             window.electron.onOutput(onStdout)
             window.electron.onExit(onExit)
-        }
-    }
+        },
+        
+        list_lb_cluster_info: () => {            
+            return exec(commands["ec2:list_lb_cluster_info"].command)
+            .then(exitObj => {
+                if (exitObj.exitStatus === 0) return exitObj.out;
+            })
+            .then(data => {
+                let cluster_info = JSON.parse(data);                
+        
+                return Promise.all(cluster_info.map(async (cluster, ind) => {    
+
+                    cluster_info[ind].status = cluster_info[ind].status.at(-1) == ')' ? cluster_info[ind].status.substr(0, cluster_info[ind].status.length - 3) : cluster_info[ind].status
+                    
+                    const inspectData = await exec(`docker inspect $(docker ps -aq --filter "label=com.docker.compose.project=${cluster.name}") \
+                    --format '{{json .}}' | jq -s '[.[] | {name: .Name, machine_image: .Config.Image, state: .State.Status, network: .HostConfig.NetworkMode, labels: .Config.Labels}]'`)
+        
+                    if (inspectData.exitStatus === 0) {
+                        
+                        const raw = JSON.parse(inspectData.out);
+                        cluster_info[ind].components = raw.map(dt => {
+                            if (dt.labels.container_type != "vm_instance"){
+                                cluster_info[ind].network = dt.network
+                            }
+                            return {
+                                name: dt.name.substring(1),
+                                network: dt.network,
+                                state: dt.state,
+                                machine_image: dt.machine_image,
+                                type: dt.labels.container_type == "vm_instance" ? dt.labels.container_type : "load balancer",
+                                application_port: dt.labels.container_type == "vm_instance" ? dt.labels[`traefik.http.services.${dt.machine_image}.loadbalancer.server.port`] : "80"
+                            }
+                    });
+                    } else {
+                        cluster_info[ind].components = []
+                    }
+                })).then(() => cluster_info)
+            });
+        },
+
+        stop_lb_cluster: (composeFile) => {
+            return exec(commands["ec2:stop_lb_cluster:fx"].command(composeFile))
+            .then(exitObj => exitObj)
+            .catch(err => console.log(err))
+        },
+
+        start_lb_cluster: (composeFile) => {
+            return exec(commands["ec2:start_lb_cluster:fx"].command(composeFile))
+            .then(exitObj => exitObj)
+            .catch(err => console.log(err))
+        },
+        
+    }   
 }
 
 export default fx

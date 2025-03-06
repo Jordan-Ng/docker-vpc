@@ -9,35 +9,6 @@ import useEC2NewInstanceProvision_hooks from "../../helpers/hooks/EC2/newInstanc
 const NewInstanceProvision = () => {
     
     const {location, checkpoint, instructions, fileReady, userTampered, setCheckpoint, prepareDockerfile} = useEC2NewInstanceProvision_hooks()
-    
-    // const instructions ={
-    //     "1":{
-    //         commands: {
-    //           command: "docker",
-    //           args: ["buildx", "build", "-t", location.state.data.instanceName, `./machine_images/${location.state.data.instanceName}`]
-    //         },
-    //         message: "[docker-vpc] ====== Building image from dockerfile.. ======"
-    //         },
-    //     "2":{
-    //         commands : {
-    //           command: "docker",
-    //           args: ["container", "create", "-it", 
-    //           ...location.state.data.network ? ["--network", location.state.data.network] : "" ,
-    //           ...location.state.data.volume ? ["-v", `${location.state.data.volume}:/home`] : "",
-    //           ...location.state.data.portMappings.flatMap(mapObj => ['-p', `${mapObj.from}:${mapObj.to}`]),
-    //           "--name", location.state.data.instanceName, 
-    //           "--label", "type=virtual_instance" , location.state.data.image]
-    //         },
-    //         message: "[docker-vpc] ====== Creating Container Instance.. ======"
-    //         },
-    //     "3" : {
-    //         commands : {
-    //             command: "",
-    //             args : []
-    //         },
-    //         message: "[docker-vpc] Container provisioned succesfully!"
-    //     }
-    // }    
 
     useEffect(() => {                     
         prepareDockerfile(location.state.data)
@@ -74,9 +45,9 @@ const NewInstanceProvision = () => {
                             <Text c="dimmed" size="sm">Creating Container from AMI</Text>
                         </Timeline.Item>
 
-                        <Timeline.Item title="Starting Instance" lineVariant="dashed">
+                        {/* <Timeline.Item title="Starting Instance" lineVariant="dashed">
                             <Text c="dimmed" size="sm">Starting Created Container</Text>
-                        </Timeline.Item>
+                        </Timeline.Item> */}
 
                         <Timeline.Item title="Done!" lineVariant="dashed">                            
                             <Text c="dimmed" size="sm">Container provisioned. <Anchor href="/" underline="hover">View Dashboard</Anchor></Text>

@@ -106,6 +106,21 @@ const commands = {
         command: (pathName) => {            
             return `cat ${pathName}`
         }
+    },
+
+    "ec2:list_lb_cluster_info" : {
+        description: "list load balancer info on docker compose",
+        command: "docker compose ls -a --format '{{json.}}' | jq -s '[.[] | {name: .Name, status: .Status, configFile: .ConfigFiles}]'"
+    },
+
+    "ec2:stop_lb_cluster:fx" : {
+        description: "stop running load balancer groups",
+        command: (composeFile) =>  (`docker compose -f ${composeFile} stop`)
+    },
+
+    "ec2:start_lb_cluster:fx" : {
+        description: "start load balancer groups",
+        command: (composeFile) =>  (`docker compose -f ${composeFile} start`)
     }
 }
 

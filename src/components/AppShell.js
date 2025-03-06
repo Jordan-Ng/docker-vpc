@@ -1,12 +1,22 @@
-import React, { useEffect } from 'react';
-import { AppShell as Appshell, Burger, Group, Image, Space, Text, NavLink, Collapse } from '@mantine/core';
+import React, { useState, useEffect } from 'react';
+import { AppShell as Appshell, Burger, Group, Image, Space, Text, NavLink, Menu, Button } from '@mantine/core';
+
 import navigationMenu from '../constants/NAVIGATION';
 import {Link} from "react-router-dom"
 import Logo from "../assets/logo.png"
 import { useDisclosure } from '@mantine/hooks';
+import { IconCaretDownFilled } from '@tabler/icons-react';
+import fx from "../helpers/fx"
 
-const AppShell = ({child, currentService}) => {
+const AppShell = ({child, currentService, setCurrentService}) => {
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(false); 
+  const [user, setUser] = useState("User")
+
+  useEffect(() => {    
+    fx.base.exec("whoami").then(response => {if (response.exitStatus == 0){
+      setUser(response.out.trim())
+    }})
+  }, [])
 
   return (
     <Appshell
@@ -19,15 +29,36 @@ const AppShell = ({child, currentService}) => {
         width: 60
     }}   
     padding="md"
+    style={{position: "relative"}}
   >
     {/* use tbeme ! */}
     <Appshell.Header bg="#D0EBFF" >
-      <Group h="100%" px="md" justify='space-between'>                
-        <Image src={Logo} h={50}/> 
+      <Group h="100%" px="md" justify='space-between'>
         <Group>
-            <Text size="sm" >Local</Text>
-            <Space w="sm" />
-            <Text size="sm">User</Text>
+          <Image src={Logo} h={45}/> 
+          <Menu position="bottom-start" width={350}>
+            <Menu.Target>
+              <Button variant="transparent" color="gray" rightSection={<IconCaretDownFilled size={15}/>}>                
+                {currentService}</Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Services</Menu.Label>
+              <Menu.Divider />
+                
+                {Object.keys(navigationMenu).map((service, ind) => (
+                <Menu.Item key={ind}>
+                  
+                  <Text c={currentService==service ? "blue" : ""} size='sm' onClick={() => setCurrentService(service)}>
+
+                  {navigationMenu[service]["Name"]}
+                  </Text>
+                </Menu.Item>))}
+            </Menu.Dropdown>
+          </Menu>
+        </Group>                
+
+        <Group>            
+            <Text size="sm">{user}</Text>
             <Space w="sm" />
         </Group>
       </Group>
@@ -46,7 +77,7 @@ const AppShell = ({child, currentService}) => {
             alignItems: "center"}}/>
 
       
-        {desktopOpened ? Object.keys(navigationMenu[currentService]).map((label, index) => (
+        {desktopOpened ? Object.keys(navigationMenu[currentService]).filter(key => key != "Name").map((label, index) => (
           
           navigationMenu[currentService][label].type == "non-collapsible" ? 
             <NavLink               

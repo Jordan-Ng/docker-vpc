@@ -29,14 +29,14 @@ const useEC2NewInstanceProvision_hooks = () => {
             },
             message: "[docker-vpc] ====== Creating Container Instance.. ======"
             },
-        "3": {
-            commands: {
-                command: "docker",
-                args: ["start", location.state.data.instanceName],
-            },
-            message: "[docker-vpc] ====== Starting Instance.. ======"
-            },
-        "4" : {
+        // "3": {
+        //     commands: {
+        //         command: "docker",
+        //         args: ["start", location.state.data.instanceName],
+        //     },
+        //     message: "[docker-vpc] ====== Starting Instance.. ======"
+        //     },
+        "3" : {
             commands : {
                 command: "",
                 args : []
@@ -59,7 +59,7 @@ const useEC2NewInstanceProvision_hooks = () => {
             await fx.base.exec(`touch ${dockerfileLocation}`)
             
             const dockerfile = 
-`FROM ${data.image} 
+`FROM ${data.image}:latest 
 LABEL name=${data.instanceName} 
 LABEL cpu=${data.instanceType.vCPU} 
 LABEL memory=${data.instanceType.memory} 

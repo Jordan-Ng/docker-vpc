@@ -8,7 +8,7 @@ export default function Modal({props}) {
 
     return(
         <>
-            <ModalMan opened={isOpen} onClose={close} size="lg" title={props?.modalTitle || ""} withCloseButton={props?.showCloseButton || false}>                
+            <ModalMan opened={isOpen} onClose={close} size="xl" title={props?.modalTitle || ""} withCloseButton={props?.showCloseButton || false}>                
                 {props?.child ? <props.child 
                 close={close} 
                 onClickHandler={props?.onClickHandler || null} 
@@ -23,6 +23,8 @@ export default function Modal({props}) {
             style={props?.buttonStyle}
             onClick={open}
             disabled={props?.buttonDisabled}
+            variant={props?.variant}
+            fullWidth={props?.buttonFullWidth}
             >
 
                 {props?.buttonText}
