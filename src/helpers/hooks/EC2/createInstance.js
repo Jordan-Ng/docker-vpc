@@ -12,35 +12,36 @@ const useEC2Creation_hooks = () => {
     const [isValidName, setIsValidName]= useState(undefined)
     const [timer, setTimer] = useState(null)
     const [instanceTypes, setInstanceTypes] = useState({})
+    const [inUsePorts, setInUsePorts] = useState(undefined)
     const [addPortError, setAddPortError] = useState({
         error: false,
         message: ""
     })
 
     const [summary, setSummary] = useState({
-        // instanceName : "express-app",
-        // image: "ubuntu",
-        // instanceType: {"Instance Size": "t1.micro",
-        // "vCPU": 1,
-        // "Memory": 1,
-        // "EBS Only" : true,            
-        // "Instance Storage": "EBS-Only"},
-        // volume: "poc-test",
-        // allowHTTP: true,
-        // allowHTTPS: true,
-        // additionalPorts: ["8081"],        
-        // network: "shared-poc",
-        // entrypoint: ["npm", "start", "--prefix", "/root/dummy-express"]        
+        instanceName : "express-app",
+        image: "ubuntu",
+        instanceType: {"Instance Size": "t1.micro",
+        "vCPU": 1,
+        "Memory": 1,
+        "EBS Only" : true,            
+        "Instance Storage": "EBS-Only"},
+        volume: "poc-test",
+        allowHTTP: true,
+        allowHTTPS: true,
+        additionalPorts: ["8081"],        
+        network: "shared-poc",
+        entrypoint: ["npm", "start", "--prefix", "/root/dummy-express"]        
 
-        instanceName : undefined,
-        image: undefined,
-        instanceType: undefined,
-        volume: undefined,
-        allowHTTP: false,
-        allowHTTPS: false,
-        additionalPorts: [],        
-        networks: undefined,
-        entrypoint: undefined
+        // instanceName : undefined,
+        // image: undefined,
+        // instanceType: undefined,
+        // volume: undefined,
+        // allowHTTP: false,
+        // allowHTTPS: false,
+        // additionalPorts: [],        
+        // networks: undefined,
+        // entrypoint: undefined 
     })
 
     const [options, setOptions] = useState({
@@ -75,7 +76,7 @@ const useEC2Creation_hooks = () => {
         setTimer(newTimer)
     }
      
-    const populateInputOptions = () => {
+    const populateInputOptions = async () => {
         const catalog = {}
 
         // create object catalog for all instance types
@@ -89,16 +90,20 @@ const useEC2Creation_hooks = () => {
         })
 
             
-        let availableVolumes 
-        fx.volume.list().then(data => {
-            availableVolumes = JSON.parse(data).map(vol => vol["name"])            
-        })
+        // let availableVolumes 
+        // fx.volume.list().then(data => {
+        //     availableVolumes = JSON.parse(data).map(vol => vol["name"])            
+        // })
+        const availableVolumes = JSON.parse( await fx.volume.list()).map(vol => vol["name"])
 
-        let availableNetworks
-        fx.ec2.list_networks().then(data => {
-            availableNetworks = JSON.parse(data).map(obj => obj.name)
-            
-        })
+        // let availableNetworks
+        // fx.ec2.list_networks().then(data => {
+        //     availableNetworks = JSON.parse(data).map(obj => obj.name)            
+        // })
+        const availableNetworks = JSON.parse(await fx.ec2.list_networks()).map(obj => obj.name)
+
+        const unavailablePorts = (await fx.ec2.list_ports_in_use()).split('\n').map(port => parseInt(port))
+        unavailablePorts.pop()
 
         // populate select input for images
         fx.ec2.list_os_images().then(os_imgs => {
@@ -106,7 +111,8 @@ const useEC2Creation_hooks = () => {
             const ami = [];
             const images = ["ubuntu"];                    
             
-            setInstanceTypes(catalog)  
+            setInstanceTypes(catalog)              
+            setInUsePorts(new Set(unavailablePorts))
             setOptions({
                 ...options,
                 ami,
@@ -194,7 +200,7 @@ const useEC2Creation_hooks = () => {
     const handleAddEntryPointCommand = (e) => {
         setSummary({
             ...summary,
-            entrypoint: e.target.value
+            entrypoint: e.target.value.split(" ")
         })
 
     }
@@ -250,7 +256,8 @@ const useEC2Creation_hooks = () => {
         handleAddEntryPointCommand,
         handleChangePortMapping,
         handleNetworkChange,
-        handleFormSubmit
+        handleFormSubmit,
+        inUsePorts
     }
 }
 

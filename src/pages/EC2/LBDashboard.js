@@ -2,14 +2,14 @@ import React, {useState, useEffect} from 'react'
 
 import {Alert, Kbd, Space, Loader, Button, Badge, Box, LoadingOverlay, Modal as ModalMan, Text, Container, Flex, Table, Checkbox} from "@mantine/core"
 import { useDisclosure } from '@mantine/hooks'
-import {ActionIcon, Modal, DeleteConfirmationModal} from "../../components"
+import {ActionIcon, Modal, DeleteConfirmationModal, Term} from "../../components"
 import {IconInfoCircle, IconRefresh, IconTrash, IconAlertTriangle, IconFileText} from "@tabler/icons-react"
 import useEC2LBDashboard_hooks from '../../helpers/hooks/EC2/useLBDashboard'
 
 
 const LBDashboard = () => {
-    const {lbData, get_lb_cluster_information, stop_cluster, start_cluster, ssh_instance, isVisible, message} = useEC2LBDashboard_hooks()
-
+    const {lbData, get_lb_cluster_information, stop_cluster, start_cluster, delete_clusters, ssh_instance, isVisible, message} = useEC2LBDashboard_hooks()
+    const [selectedRows, setSelectedRows] = useState([])
     const [active, setActive] = useState(undefined)
     const [isOpen, {open, close}] = useDisclosure(false)
 
@@ -52,26 +52,28 @@ const LBDashboard = () => {
                     <ActionIcon 
                         props = {{
                             color: "cyan",
-                            callback : "",                        
+                            callback : get_lb_cluster_information,                        
                             icon: IconRefresh ,
                             iconStyle: {
                                 width: '60%',
                                 height: '60%'
                             },
-                            onClick: null 
+                            onClick: get_lb_cluster_information
                         }}
                     />
                     <Modal 
                         props = {{                        
-                            // child: DeleteConfirmationModal,
-                            childState: {                            
+                            child: DeleteConfirmationModal,
+                            childState: {                  
+                                
+                                state: selectedRows.map(item => item.name)
+                                          
                             },
-                            onClickHandler : async () => {                           
-                            },
+                            onClickHandler : () => {delete_clusters(selectedRows); setSelectedRows([])},
                             color: "red",
                             rightIcon : <IconTrash />,
                             buttonText : "Delete Load Balancer(s)",
-                            buttonDisabled : null
+                            buttonDisabled : selectedRows.length  === 0
                         }}
                     />
             </div>
@@ -111,7 +113,23 @@ const LBDashboard = () => {
                                 <Table.Td><Badge color={comp.state == "running" ? "blue" : "yellow"}>{comp.state}</Badge></Table.Td>
                                 {/* <Table.Td>{comp.state == "running" ? <Flex><Button size="xs">Connect</Button><Space w="xs"/><Button size="xs" color="red">Stop</Button></Flex> : ""}</Table.Td> */}
                                 <Table.Td>{comp.state == "running" ? <Button size="xs" onClick={() => ssh_instance(comp.name)}>Connect</Button> : ""}</Table.Td>
-                                <Table.Td><IconFileText stroke={.5}/></Table.Td>
+                                <Table.Td>
+                                    <Modal 
+                                        props={{
+                                            child: Term,
+                                            childState: {
+                                                commands : {
+                                                    command: "docker",
+                                                    args : ["logs", comp.name],
+                                                },
+                                            },
+                                            color: "gray",
+                                            variant: "transparent",
+                                            rightIcon: <IconFileText stroke={.5} />                                        
+                                        }}
+                                    />
+
+                                </Table.Td>
                             </Table.Tr>
 
                         ))}
@@ -128,13 +146,21 @@ const LBDashboard = () => {
                         <Table.Th>Network</Table.Th>
                         <Table.Th>State</Table.Th>
                         <Table.Th>Action</Table.Th>                                    
+                        <Table.Th>Logs</Table.Th>                                    
                     </Table.Tr>
                 </Table.Thead>
 
                 <Table.Tbody>
                     {lbData ? lbData.map((lb,ind) => (
                         <Table.Tr key={ind} style={{cursor: "pointer"}}>
-                            <Table.Td><Checkbox /></Table.Td>
+                            <Table.Td>
+                                <Checkbox 
+                                    checked={selectedRows.filter(obj => obj.name === lb.name).length == 1}
+                                    onChange={e => setSelectedRows(
+                                        e.currentTarget.checked ? [...selectedRows, {name: lb.name ,file: lb.configFile}] : selectedRows.filter(obj => obj.file != lb.configFile)
+                                    )}
+                                />
+                            </Table.Td>
                             <Table.Td onClick={() => handleRowClick(ind)}>{lb.name}</Table.Td>
                             <Table.Td onClick={() => handleRowClick(ind)}>{lb.components.length}</Table.Td>
                             <Table.Td onClick={() => handleRowClick(ind)}>{lb.network}</Table.Td>
@@ -143,6 +169,24 @@ const LBDashboard = () => {
                                 {lb.status == "running" ? 
                                 <Button size="xs" color="red" onClick={() => stop_cluster(lb.configFile, lb.name)}>Stop</Button> 
                                 :<Button size="xs" onClick={() => start_cluster(lb.configFile, lb.name)}>Start</Button> }
+                            </Table.Td>
+                            <Table.Td>
+                                
+                                 <Modal 
+                                    props={{
+                                        child: Term,
+                                        childState: {
+                                            commands : {
+                                                command: "docker",
+                                                args : ["compose", "-f", lb.configFile, "logs"],
+                                            },
+                                        },
+                                        color: "gray",
+                                        variant: "transparent",
+                                        rightIcon: <IconFileText stroke={.5} />                                        
+                                    }}
+                                 />
+                                
                             </Table.Td>
                         </Table.Tr>
                     )) : <Table.Tr><Table.Td><Loader /></Table.Td></Table.Tr>}

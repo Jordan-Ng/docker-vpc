@@ -12,6 +12,9 @@ const useEC2LBDashboard_hooks = () => {
     }
 
     const stop_cluster = async (composeFilePath, lbName) => {
+        fx.base.notify(true, {
+            message: `Working, please hold on`
+        })
         fx.ec2.stop_lb_cluster(composeFilePath).then(exitObj => {
             if (exitObj.exitStatus == 0){
                 fx.base.notify(true, {
@@ -23,6 +26,9 @@ const useEC2LBDashboard_hooks = () => {
     }
 
     const start_cluster = async (composeFilePath, lbName) => {
+        fx.base.notify(true, {
+            message: `Working, please hold on`
+        })
         fx.ec2.start_lb_cluster(composeFilePath).then(exitObj => {
             if (exitObj.exitStatus == 0){
                 fx.base.notify(true, {
@@ -31,6 +37,23 @@ const useEC2LBDashboard_hooks = () => {
                 get_lb_cluster_information()
             }
         })
+    }
+
+    const delete_clusters = async (targetLbs) => {
+        fx.base.notify(true, {
+            message: 'Working, please hold on'
+        })
+
+        for (const targetlb of targetLbs) {
+            const exitObj = await fx.base.exec(`docker compose -f ${targetlb.file} down && rm -rf ./compose_files/${targetlb.name}`);
+            if (exitObj.exitStatus === 0) {
+                fx.base.notify(true, {
+                    message: `${targetlb.name} removed successfully`
+                });
+            }
+        }
+
+        get_lb_cluster_information()        
     }
 
     const ssh_instance = (instanceName) => {
@@ -44,7 +67,7 @@ const useEC2LBDashboard_hooks = () => {
         )
     }
 
-    return {lbData, get_lb_cluster_information, stop_cluster, start_cluster, ssh_instance, isVisible, message}
+    return {lbData, get_lb_cluster_information, stop_cluster, start_cluster, ssh_instance, isVisible, message, delete_clusters}
 }
 
 export default useEC2LBDashboard_hooks

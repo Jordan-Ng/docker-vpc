@@ -1,17 +1,16 @@
-import React, {useState, forwardRef} from "react"
+import React, {useState, forwardRef, useImperativeHandle} from "react"
 import {NumberInput, Group, Button, Flex, ActionIcon, TextInput} from '@mantine/core'
 import {IconArrowsExchange, IconX} from "@tabler/icons-react"
 
-const MapperRow = ({id, handleChange, handleRemove, valObj}) => {
-
+const MapperRow = ({id, handleChange, handleRemove, valObj, inUse}) => {    
     return(
     <Flex justify="space-between" align="center">                
         <NumberInput 
-        placeholder="Host port (49152 ~ 65535)" 
-        hideControls                 
-        
-        min={1024}
-        max={65535}
+        placeholder="Host port (3000 ~ 8999)" 
+        hideControls                  
+        error={inUse?.has(valObj.from) ? "Host Port in Use" : false}        
+        min={3000}
+        max={8999}
         onChange = {e => handleChange(e, id, "from")}
         value={valObj.from}
         />
@@ -34,8 +33,8 @@ const MapperRow = ({id, handleChange, handleRemove, valObj}) => {
     </Flex>)
 }
 
-const PortMapper = ({handleAdd, handleChange, handleRemove, store}) => {
-
+const PortMapper = ({handleAdd, handleChange, handleRemove, store, inUse}) => {
+    
     return(
         <Group>            
             {store.map((pm, ind) => 
@@ -43,7 +42,8 @@ const PortMapper = ({handleAdd, handleChange, handleRemove, store}) => {
             key={ind} 
             id={ind} 
             handleChange={handleChange} 
-            handleRemove={handleRemove} 
+            handleRemove={handleRemove}   
+            inUse={inUse}          
             valObj={store[ind]}/>)}
             <Button 
                 variant="transparent"                

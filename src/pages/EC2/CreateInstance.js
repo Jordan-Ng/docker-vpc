@@ -12,6 +12,7 @@ const CreateInstances = () => {
         summary, 
         portMappings,
         options, 
+        inUsePorts,
         addPortError,
         handleTextChange, 
         populateInputOptions, 
@@ -26,7 +27,7 @@ const CreateInstances = () => {
 
     useEffect(() => {             
         populateInputOptions()
-    },[])    
+    },[])        
 
     return(
         <Container>
@@ -96,7 +97,7 @@ const CreateInstances = () => {
                                 group: key,
                                 items: options.instance_types[key].map(obj => obj["Instance Size"])
                             }))}
-                            value={summary.instanceType["Instance Size"]}
+                            value={summary.instanceType?.["Instance Size"]}
                             placeholder="select an option"                        
                             onChange={(val, opt) => handleSelect(val, opt, "instanceType")}
                             {...summary.instanceType === null ? {error: "Please select an option"} : {}}                        
@@ -206,6 +207,7 @@ const CreateInstances = () => {
                             handleChange={(e,id,field) => handleChangePortMapping(e, id, field, "update")}
                             handleRemove={(id) => handleChangePortMapping("", id, "", "remove")}
                             store={portMappings}
+                            inUse={inUsePorts}
                         />                    
                     </Card>
                     
@@ -220,8 +222,7 @@ const CreateInstances = () => {
                             label="Entrypoint Command"
                             placeholder="i.e npm start"
                             description="command to run on instance startup"
-                            onChange={handleAddEntryPointCommand}
-                            value={summary.entrypoint}
+                            onChange={handleAddEntryPointCommand}                            
                             {...summary.entrypoint === null ? {error: "Please Enter a command to run on instance startup"} : ""}
                         />
                     </Card>
@@ -299,6 +300,7 @@ const CreateInstances = () => {
                             <Space h="xs"/>
 
                             <Text c="blue" size="sm" fw={700}>Port Mappings</Text>
+                            <Space h="xs"/>
                             <Group>
                                 {portMappings.map((pm, ind) => <Pill key={ind}>{pm.from} : {pm.to}</Pill>)}                                
                             </Group>

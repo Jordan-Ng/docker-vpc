@@ -5,6 +5,7 @@ export {default as Modal} from "./Modal"
 export {default as Card} from "./Card"
 export {default as Terminal} from "./Terminal"
 export {default as CodeViewer} from "./CodeViewer"
+export {default as Term} from "./Term"
 
 
 export {default as DeleteConfirmationModal} from "./composite/DeleteConfirmationModal"

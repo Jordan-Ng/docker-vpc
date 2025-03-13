@@ -109,6 +109,13 @@ const fx = {
             .catch(err => console.log("list_networkk", err))
         },
 
+        list_ports_in_use: () => {
+            return exec(commands["ec2:list_ports_in_use"].command)
+            .then(exitObj => {if (exitObj.exitStatus == 0) return exitObj.out})
+            .then(stdout => stdout)
+            .catch(err => console.log(err))
+        },
+
         is_valid_instance_name: (volName) => {
             return exec(commands["ec2:get_container_information:fx"].command(volName))
             .then((data) => false)
@@ -178,17 +185,17 @@ const fx = {
             });
         },
 
-        stop_lb_cluster: (composeFile) => {
-            return exec(commands["ec2:stop_lb_cluster:fx"].command(composeFile))
-            .then(exitObj => exitObj)
-            .catch(err => console.log(err))
-        },
-
         start_lb_cluster: (composeFile) => {
             return exec(commands["ec2:start_lb_cluster:fx"].command(composeFile))
             .then(exitObj => exitObj)
             .catch(err => console.log(err))
         },
+
+        stop_lb_cluster: (composeFile) => {
+            return exec(commands["ec2:stop_lb_cluster:fx"].command(composeFile))
+            .then(exitObj => exitObj)
+            .catch(err => console.log(err))
+        }
         
     }   
 }

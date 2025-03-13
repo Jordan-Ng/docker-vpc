@@ -121,6 +121,11 @@ const commands = {
     "ec2:start_lb_cluster:fx" : {
         description: "start load balancer groups",
         command: (composeFile) =>  (`docker compose -f ${composeFile} start`)
+    },
+
+    "ec2:list_ports_in_use" : {
+        description: "list port numbers that are being used by other processes (3000 - 8999)",
+        command: `lsof -i -Pn | awk -F: '{split($2, a, " "); if (a[1] ~ /^[0-9]+$/ && a[1] >= 3000 && a[1] <= 8999) {split(a[1], b, "->"); print b[1]}}' | sort -n | uniq | jq -R 'tonumber'`
     }
 }
 

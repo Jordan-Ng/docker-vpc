@@ -48,8 +48,7 @@ const navigationMenu = {
             "Create Load Balancer" : {
                 type: type.nonCollapsible,
                 route: "create",
-                component: <CreateLB />,
-                // component: <ProvisionLB />,
+                component: <CreateLB />,                
                 childRoutes: {
                     "New Load Balancer Provision" : {
                         type: type.nonCollapsible,
@@ -65,8 +64,8 @@ const navigationMenu = {
             component: <Volumes />
         }
     },
-    "ALB" : {
-        "Name" : "Application Load Balancer"
+    "API Gateway" : {
+        "Name" : "API Gateway"
     }
 }
 

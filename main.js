@@ -45,8 +45,7 @@ ipcMain.on("spawn", (event, commandObj) => {
     childProcess.stdout.on("data", data => event.sender.send("command-output", data.toString()))
     childProcess.stderr.on("data", data => event.sender.send("command-output", data.toString()))
 
-    childProcess.on("close", code => {event.sender.send("child-exit", code.toString())})    
-
+    childProcess.on("close", code => {event.sender.send("child-exit", code.toString())})        
   })
 })
 
