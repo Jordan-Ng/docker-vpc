@@ -74,7 +74,7 @@ const Dashboard = () => {
     }, [isVisible])
 
     return(        
-            <Box>
+            <Box data-testid="ec2-dashboard">
                 <LoadingOverlay visible={!isVisible} overlayProps={{blur: 2}} loaderProps={{children: 
                     <div>
                         <Text fw={500}><Loader size="xs" mr="sm"/> 

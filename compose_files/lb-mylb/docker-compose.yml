@@ -1,0 +1,36 @@
+
+services:
+    traefik:
+        image: traefik
+        container_name: lb-mylb_traefik
+        command: --providers.docker
+        ports:
+            - 80:80 
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - tg-network
+    
+    express-app-1:
+        image: express-app
+        container_name: lb-mylb_express-app-1
+        networks:
+            - tg-network
+        labels:
+            - "traefik.http.routers.express-app.rule=Host(`localhost`)"
+            - "traefik.http.services.express-app.loadbalancer.server.port=8000"
+    
+    express-app-2:
+        image: express-app
+        container_name: lb-mylb_express-app-2
+        networks:
+            - tg-network
+        labels:
+            - "traefik.http.routers.express-app.rule=Host(`localhost`)"
+            - "traefik.http.services.express-app.loadbalancer.server.port=8000"
+    
+
+networks:
+    tg-network:
+        driver: bridge
+

@@ -66,7 +66,8 @@ const AppShell = ({child, currentService, setCurrentService}) => {
 
     <Appshell.Navbar p="md" >
 
-        <Burger 
+        <Burger
+          data-testid="appshell-burger" 
           opened={desktopOpened} 
           onClick={toggleDesktop} 
           size="sm"  
@@ -80,7 +81,8 @@ const AppShell = ({child, currentService, setCurrentService}) => {
         {desktopOpened ? Object.keys(navigationMenu[currentService]).filter(key => key != "Name").map((label, index) => (
           
           navigationMenu[currentService][label].type == "non-collapsible" ? 
-            <NavLink               
+            <NavLink
+              data-testid={label}   
               component={Link}
               to={navigationMenu[currentService][label].route}
               key={index}

@@ -91,7 +91,7 @@ const Volumes = () => {
     }, [])
 
     return (
-        <Container>
+        <Container data-testid="ec2-volumes">
             <div style={{marginBottom: "20px", display: "flex", justifyContent: "end"}}>
                 <ActionIcon 
                     props = {{
