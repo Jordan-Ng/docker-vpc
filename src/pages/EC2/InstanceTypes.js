@@ -1,11 +1,11 @@
-import React from "react"
+import React from 'react'
 import {Container, Badge, Space} from "@mantine/core"
-import {Table} from "../../components"
-import INSTANCE_TYPES from "../../constants/INSTANCE_TYPES.json"
+import {Table} from '../../components'
+import INSTANCE_TYPES from '../../constants/INSTANCE_TYPES.json'
 
 const InstanceTypes = () => {
     const data = INSTANCE_TYPES
-    
+
     Object.keys(data).forEach((fam) => {
         data[fam] = data[fam].map(inst => {return {
             "Instance Size" : inst["Instance Size"],
@@ -13,7 +13,7 @@ const InstanceTypes = () => {
             "Memory" : inst["Memory"],
             "Instance Storage" : inst["Instance Storage"]
         }})
-    })    
+    })
 
     return(
         <Container>
@@ -31,7 +31,7 @@ const InstanceTypes = () => {
                     />
                 </div>
             ))}
-        </Container>        
+        </Container>     
     )
 }
 

@@ -1,26 +1,21 @@
 import React, {useState, useEffect, useRef} from 'react'
-import { Box, Space, Container, Loader, Flex, Tooltip, Group } from '@mantine/core'
-import { IconInfoCircle, IconTrash, IconRefresh } from '@tabler/icons-react'
-import {Table, DeleteConfirmationModal, SSHOverlay, Button} from '../../components'
-import useEC2Dashboard_hooks from "../../helpers/hooks/EC2/useEC2Dashboard"
+import { Box, Space, Container, Loader, Flex, Tooltip, Group, Badge, toRgba } from '@mantine/core'
+import { IconInfoCircle, IconTrash, IconRefresh, IconFileText } from '@tabler/icons-react'
+import {Table, DeleteConfirmationModal, Terminal, Button} from '../../components'
+import useAPIGWDashboard_hooks from '../../helpers/hooks/API_GATEWAY/useAPIGWDashboard'
+import fx from '../../helpers/fx'
 
 
 const Dashboard =() => {
-    const {getInstances, instances, isVisible, childMessage, deleteInstances} = useEC2Dashboard_hooks()    
+    const terminalRef = useRef()
+    const {getGateways, gateways, startGateway, stopGateway, deleteGateways} = useAPIGWDashboard_hooks()    
 
     useEffect(() => {        
-        getInstances()
+        getGateways()
     }, [])    
 
     return(
-        <Box>
-            <SSHOverlay 
-                message={childMessage}
-                isVisible={isVisible}
-            />
-
-            
-            {instances ? 
+        <Box>            
                 <Container>
                     <Space h="md"/>
 
@@ -37,7 +32,7 @@ const Dashboard =() => {
                                                 variant="default"
                                                 props={{
                                                         type:"icon-only",
-                                                        onClick: getInstances,
+                                                        onClick: () => getGateways(),
                                                         button: {
                                                             icon : <IconRefresh stroke={1.5}/>,
                                                             color: "cyan",                                            
@@ -52,11 +47,11 @@ const Dashboard =() => {
                                                 props={{                                                                                                                                                                                                                    
                                                         child: DeleteConfirmationModal,
                                                         childState: {                                                            
-                                                            onClickHandler: () => {deleteInstances(selectedRows); setSelectedRows([])},
+                                                            onClickHandler: () => {deleteGateways(selectedRows); setSelectedRows([])},
                                                             state: selectedRows
                                                         },                                                                                                                                                               
                                                         button: {                                            
-                                                            text: "Delete Instance(s)",
+                                                            text: "Delete API Gateway(s)",
                                                             color: "red",
                                                             rightSection: <IconTrash stroke={1.5}/>,
                                                             disabled: selectedRows?.length == 0                                                                                                    
@@ -66,14 +61,52 @@ const Dashboard =() => {
                                         </Flex>)                                  
                                 }
                             },                                 
-                            rowAttributeSelect: "name",                            
-                            columns: instances.length > 0  ? Object.keys(instances[0]) : ["id", "image", "command", "mounts", "name", "state", "networks", "action"],
-                            data: instances,                                        
+                            rowAttributeSelect: "Name",                            
+                            columns:  ["Name", "Status", "Configuration File", "Action", "Logs"],
+                            data: gateways?.map(gw => ({
+                                "Name" : gw.name,
+                                "Status": <Badge color={gw.status.startsWith("running") ? "blue": "yellow"}>{gw.status}</Badge>,
+                                "Configuration File": gw.configFile,
+                                "Action": <Button 
+                                    variant = "default"
+                                    props={{
+                                        onClick: gw.status.startsWith("running") ? () => stopGateway(gw.name) : () => startGateway(gw.name),
+                                        button: {
+                                            color: gw.status.startsWith("running") ? "red" : "blue",
+                                            text: gw.status.startsWith("running") ? "Stop" : "Start",
+                                            size: "xs"
+                                        }
+                                    }}
+                                />,
+                                "Logs": <Button 
+                                    variant = "modal"
+                                    props={{
+                                        type: "icon-only",
+                                        onClose: gw.status.startsWith("running") ? () => fx.base.kill(terminalRef.current.getPid()) : () => {},
+                                        modal: {
+                                            size: "90vw"
+                                        },
+                                        child: () => <Terminal 
+                                            ref={terminalRef}
+                                            props={{
+                                                variant: "single",
+                                                job: fx.api.show_gw_logs,
+                                                args: gw.configFile
+                                            }}
+                                        />,
+                                        button: {
+                                            icon: <IconFileText stroke={1.5}/>,
+                                            variant: "transparent",
+                                            color: "grey"
+                                        }
+                                    }}
+                                />
+                            })),                                        
                         }}
                     />
 
                 </Container> 
-                : <Loader />}
+                
 
         </Box>
     )

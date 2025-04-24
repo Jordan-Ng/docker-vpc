@@ -8,7 +8,7 @@
     "build": "webpack --mode production",
     "dev": "concurrently \"npm run react:serve\" \"npm run electron:run\"",
     "react:serve": "webpack serve --config webpack.config.js --port 3000",
-    "electron:run": "wait-on http://localhost:3000 && electron ."
+    "electron:run": "sleep 7 && electron . "
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@mantine/charts": "^7.11.2",
     "@mantine/core": "^7.11.2",
+    "@mantine/form": "^7.17.2",
     "@mantine/hooks": "^7.11.2",
     "@mantine/notifications": "^7.12.2",
     "@tabler/icons-react": "^3.11.0",
@@ -24,8 +25,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.1",
-    "react-terminal-component": "^1.5.0",
-    "sass": "^1.77.8",
+    "react-terminal-component-new": "^2.3.6",
     "style-loader": "^4.0.0",
     "webpack-cli": "^5.1.4"
   },
@@ -38,9 +38,11 @@
     "css-loader": "^7.1.2",
     "html-webpack-plugin": "^5.6.0",
     "postcss": "^8.4.39",
+    "postcss-loader": "^8.1.1",
     "postcss-preset-mantine": "^1.16.0",
     "postcss-simple-vars": "^7.0.1",
-    "sass-loader": "^14.2.1",
+    "sass": "^1.85.1",
+    "sass-loader": "^16.0.5",
     "wait-on": "^7.2.0",
     "webpack": "^5.93.0",
     "webpack-dev-server": "^5.0.4"

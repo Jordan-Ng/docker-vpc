@@ -1,19 +1,10 @@
-import React, {useState, forwardRef, useImperativeHandle, useEffect} from "react"
+import React, {useState, forwardRef, useImperativeHandle} from "react"
 import { TextInput as InputMan, Flex, Text, Space, Badge, Divider, Button } from "@mantine/core"
 import { IconX } from "@tabler/icons-react"
 
-const UserScriptRow = ({id, actionArray, state, setState}) => {
-    const [timer, setTimer] = useState(null)
+const UserScriptRow = ({id, actionArray, state, setState}) => {    
 
-    const handleRemove = (id) => {
-        // const newList = [...state[actionArray[0]]]
-        // newList[id] = ""
-
-        // setState({
-        //     ...state,
-        //     [actionArray[0]] : newList
-        // })
-        
+    const handleRemove = (id) => {                
         setState({
             ...state,
             [actionArray[0]] : state[actionArray[0]].filter((el, ind) => ind != id)
@@ -77,8 +68,7 @@ const UserScriptRow = ({id, actionArray, state, setState}) => {
                 </>}
 
                 <div 
-                    style={{width: "5%", display:"flex", alignItems: "center", cursor: "pointer"}}                
-                    // onClick={handleRemove}>
+                    style={{width: "5%", display:"flex", alignItems: "center", cursor: "pointer"}}                                    
                     onClick={() => handleRemove(id)}>
                     <IconX />
                 </div>        
@@ -124,14 +114,15 @@ const UserScriptSection = ({phase, phaseLabel, state, setState, actionArray}) =>
 }
 
 const UserScriptForm = forwardRef((props,ref) => {
-    const [userScripts, setUserScripts] = useState({
-        // "COPY": [],
+    const [userScripts, setUserScripts] = useState({        
         "ADD": [],
+        // ["RUN", ""],
         "RUN": [
-            ["RUN", "apt-get -y update && apt-get install -y git curl gnupg npm"],
+            // ["RUN", "apt-get -y update && apt-get install -y git curl gnupg npm"],
+            ["RUN", "apt-get -y update && apt-get install -y curl git gnupg"],
+            ["RUN", "curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs"],
             ["RUN", "cd /root && git clone https://github.com/Jordan-Ng/dummy-express.git"],
             ["RUN", "cd /root/dummy-express && npm install"],
-            // ["RUN", ""],
         ]
     })
 
@@ -145,16 +136,7 @@ const UserScriptForm = forwardRef((props,ref) => {
     }))    
 
     return(
-        <>
-            {/* <Space h="xs"/>
-                    <UserScriptSection 
-                        phase="Copy Phase"
-                        phaseLabel="Copy files from host machine to instance ( /usr folder)"
-                        state={userScripts}
-                        setState={setUserScripts}
-                        actionArray={["COPY", "", "/usr"]}
-                    />   */}
-                     
+        <>                                 
             <Space h="xs"/>
                     <UserScriptSection 
                         phase="Add Phase"

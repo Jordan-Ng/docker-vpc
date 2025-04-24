@@ -1,7 +1,10 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { exec, spawn } = require('child_process');
+const process = require('process')
+const util = require('util')
 const isDev = true
+const execAsync = util.promisify(exec)
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -10,64 +13,69 @@ function createWindow () {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
-      contextIsolation: true,
+      contextIsolation: true,      
     },
   });
 
-  
-
-  if (isDev) {
+  if (isDev) {    
     mainWindow.loadURL("http://localhost:3000")
+    mainWindow.webContents.openDevTools(); // Open DevTools in development mode
   }
   else {
       mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
-
-  
-  mainWindow.webContents.openDevTools(); // Open DevTools in development mode
 }
 
-ipcMain.handle('run-command', (event, command) => {
-    return new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => (error ? reject(stderr) : resolve({
-        exitStatus: 0,        
-        out : stdout
-      }))      
-      );
-    });
-});
+// =============== EVENT HANDLERS ======================
+ipcMain.handle("exec", async (event, command) => {  
+  try{
+    const data =  await execAsync(command)    
+    return {
+      exitStatus: 0,
+      out: data.stdout
+    }
+  }
+  catch (error){
+    return {
+      exitStatus: -1,
+      err: error.toString()
+    }
+  }
+})
 
-ipcMain.on("spawn", (event, commandObj) => {
-  return new Promise((resolve, reject) => {
-    let childProcess = spawn(commandObj.command, commandObj.args)
+ipcMain.on("spawn", async (event, commandObj) => {
+  try {
+    const childProcess = spawn(commandObj.command, commandObj.args)
+
+    childProcess.on("error", err => event.sender.send("on-stderr", err.toString()))
+    childProcess.on("spawn", () => event.sender.send("on-spawn", childProcess.pid))
     
-    childProcess.on("error", err => event.sender.send("command-output", err.toString()))        
-    childProcess.stdout.on("data", data => event.sender.send("command-output", data.toString()))
-    childProcess.stderr.on("data", data => event.sender.send("command-output", data.toString()))
+    childProcess.stdout.on("data", data => event.sender.send("on-stdout", data.toString()))
+    childProcess.stderr.on("data", err => event.sender.send("on-stderr", err.toString()))
 
-    childProcess.on("close", code => {event.sender.send("child-exit", code.toString())})    
-
-  })
+    childProcess.on("close", code => event.sender.send("on-exit", code))
+  }
+  catch (err){
+    console.error(err.toString())    
+  }
 })
 
 ipcMain.handle("pathJoin", (event, pathArgs) => {
   return path.join(__dirname, ...pathArgs)
 })
 
-app.on('ready', async () => {
-  try{
-    let cp = await spawn("sh" , [path.join(__dirname, "bin", "start_colima.sh")])
-    cp.on("error", err => console.log("ERROR", err))
-    cp.stdout.on("data", data => console.log("STDOUT", data.toString()))
-    cp.stderr.on("data", data => console.log("STDERR", data.toString()))
-  
-    cp.on("close", code => code === 0 && createWindow())
-  }
-  catch(err) {
-    console.log(err)
-  }
+ipcMain.handle("pathRelative", (event, abspath) => {
+  return path.relative(__dirname, abspath)
+})
 
-  // createWindow()
+ipcMain.on("kill", (event, pid) => {
+  process.kill(pid, "SIGTERM")
+})
+
+
+// =============== APP EVENTS ===================
+app.on('ready', async () => {  
+  createWindow()
 });
 
 app.on('window-all-closed', () => {

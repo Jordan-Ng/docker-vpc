@@ -1,156 +1,201 @@
-import React, {useState, useEffect} from 'react'
-
-import {Alert, Kbd, Space, Loader, Button, Badge, Box, LoadingOverlay, Modal as ModalMan, Text, Container, Flex, Table, Checkbox} from "@mantine/core"
-import { useDisclosure } from '@mantine/hooks'
-import {ActionIcon, Modal, DeleteConfirmationModal} from "../../components"
-import {IconInfoCircle, IconRefresh, IconTrash, IconAlertTriangle, IconFileText} from "@tabler/icons-react"
-import useEC2LBDashboard_hooks from '../../helpers/hooks/EC2/useLBDashboard'
-
-
-const LBDashboard = () => {
-    const {lbData, get_lb_cluster_information, stop_cluster, start_cluster, ssh_instance, isVisible, message} = useEC2LBDashboard_hooks()
-
-    const [active, setActive] = useState(undefined)
-    const [isOpen, {open, close}] = useDisclosure(false)
-
-    useEffect(() => {
-        get_lb_cluster_information()
-    }, [])        
+import React, {useState, useEffect, useRef} from 'react'
+import useLBDashboard from '../../helpers/hooks/EC2/useLBDashboard'
+import { Badge, Box, Flex, Space, Text } from '@mantine/core'
+import { Button, Table, DeleteConfirmationModal, SSHOverlay, Terminal } from '../../components'
+import { IconFileText, IconRefresh, IconTrash } from '@tabler/icons-react'
+import fx from '../../helpers/fx'
 
 
-    const handleRowClick = (ind) => {
-        setActive(lbData[ind])
-        open()
-    }
-
+const TGModal = ({data, addHandlers}) => {          
+    
     return(
-    <Box>
-        <LoadingOverlay visible={!isVisible} overlayProps={{blur: 2, backgroundOpacity: 0.9}} loaderProps={{children: 
-                    <div>
-                        <Text fw={500}><Loader size="xs" mr="sm"/> 
-                        Temporarily blocked. Please interact with spawned terminal
-                        </Text>
-                        <Text size="sm">When you are ready to end the shell session, hit &nbsp; <Kbd>⌘</Kbd> + <Kbd>Q</Kbd> &nbsp; on the terminal to resume on the main window</Text>
-                        
-                        <Text size="xs" mt="xs" c="teal">* Please allow up to 5 seconds for cleanup process to trigger (due to polling)</Text>
+        <>            
+            <Flex>
+            <Badge>{data?.name}</Badge>
+            <Space w="sm"/>
+            <Text size="xs" c="gray">{data?.configFile}</Text>
 
-                        <Space h="xl"/>
-                        <Text size="sm" fw={500} c="blue" ta="center">Status: {message}</Text>
-                        <Space h="xl"/>
+            <Space h="lg"/>
+            </Flex>
 
-                        <Alert variant="light" color="yellow" title="Trying To Be Smart?" icon={<IconInfoCircle />} style={{width: "500px"}}>
-                            The spawned terminal is a new process instance of the Terminal application,
-                            with an automated connection to the container instance of your choice.
-                            As a fully operational shell, one may be tempted to <Kbd>exit</Kbd> the connection,
-                            and run something destructive like <Kbd>rm -rf /</Kbd>. Try it, it's your funeral. 
-                        </Alert>
-                    </div>
-                    }}/>
-
-        <Container>
-            <div style={{marginBottom: "20px", display: "flex", justifyContent: "end"}}>
-                    <ActionIcon 
-                        props = {{
-                            color: "cyan",
-                            callback : "",                        
-                            icon: IconRefresh ,
-                            iconStyle: {
-                                width: '60%',
-                                height: '60%'
-                            },
-                            onClick: null 
-                        }}
-                    />
-                    <Modal 
-                        props = {{                        
-                            // child: DeleteConfirmationModal,
-                            childState: {                            
-                            },
-                            onClickHandler : async () => {                           
-                            },
-                            color: "red",
-                            rightIcon : <IconTrash />,
-                            buttonText : "Delete Load Balancer(s)",
-                            buttonDisabled : null
-                        }}
-                    />
-            </div>
-            
-            <ModalMan opened={isOpen} onClose={close} title="Target Group Information" size='xxl' yOffset={100}>
-                
-                <Flex>
-                <Badge>{active?.name}</Badge>
-                <Space w="sm"/>
-                <Text size="xs" c="gray">{active?.configFile}</Text>
-                </Flex>
-
-                <Space h="lg"/>
-
-                <Table>
-                    <Table.Thead>
-                        <Table.Tr>                                            
-                            <Table.Th>Instance Name</Table.Th>
-                            <Table.Th>Machine Image</Table.Th>
-                            <Table.Th>Type</Table.Th>
-                            <Table.Th>Network</Table.Th>
-                            <Table.Th>Port</Table.Th>                                    
-                            <Table.Th>State</Table.Th>                                    
-                            <Table.Th>Actions</Table.Th>                                    
-                            <Table.Th>Logs</Table.Th>                                    
-                        </Table.Tr>
-                    </Table.Thead>
-                                    
-                    <Table.Tbody>
-                        {active?.components.map((comp, ind) => (
-                            <Table.Tr key={ind}>
-                                <Table.Td>{comp.name}</Table.Td>
-                                <Table.Td>{comp.machine_image}</Table.Td>
-                                <Table.Td>{comp.type}</Table.Td>
-                                <Table.Td>{comp.network}</Table.Td>
-                                <Table.Td>{comp.application_port}</Table.Td>
-                                <Table.Td><Badge color={comp.state == "running" ? "blue" : "yellow"}>{comp.state}</Badge></Table.Td>
-                                {/* <Table.Td>{comp.state == "running" ? <Flex><Button size="xs">Connect</Button><Space w="xs"/><Button size="xs" color="red">Stop</Button></Flex> : ""}</Table.Td> */}
-                                <Table.Td>{comp.state == "running" ? <Button size="xs" onClick={() => ssh_instance(comp.name)}>Connect</Button> : ""}</Table.Td>
-                                <Table.Td><IconFileText stroke={.5}/></Table.Td>
-                            </Table.Tr>
-
-                        ))}
-                    </Table.Tbody>
-                </Table>
-            </ModalMan>
-
-            <Table>
-                <Table.Thead>
-                    <Table.Tr>                    
-                        <Table.Th></Table.Th>
-                        <Table.Th>Name</Table.Th>
-                        <Table.Th># of Services</Table.Th>
-                        <Table.Th>Network</Table.Th>
-                        <Table.Th>State</Table.Th>
-                        <Table.Th>Action</Table.Th>                                    
-                    </Table.Tr>
-                </Table.Thead>
-
-                <Table.Tbody>
-                    {lbData ? lbData.map((lb,ind) => (
-                        <Table.Tr key={ind} style={{cursor: "pointer"}}>
-                            <Table.Td><Checkbox /></Table.Td>
-                            <Table.Td onClick={() => handleRowClick(ind)}>{lb.name}</Table.Td>
-                            <Table.Td onClick={() => handleRowClick(ind)}>{lb.components.length}</Table.Td>
-                            <Table.Td onClick={() => handleRowClick(ind)}>{lb.network}</Table.Td>
-                            <Table.Td onClick={() => handleRowClick(ind)}><Badge color={lb.status == "running" ? "blue": "yellow"}>{lb.status}</Badge></Table.Td>
-                            <Table.Td>
-                                {lb.status == "running" ? 
-                                <Button size="xs" color="red" onClick={() => stop_cluster(lb.configFile, lb.name)}>Stop</Button> 
-                                :<Button size="xs" onClick={() => start_cluster(lb.configFile, lb.name)}>Start</Button> }
-                            </Table.Td>
-                        </Table.Tr>
-                    )) : <Table.Tr><Table.Td><Loader /></Table.Td></Table.Tr>}
-                </Table.Tbody>
-            </Table>
-        </Container>
-    </Box>
+            <Table 
+                props={{
+                    columns: ["Instance Name", "Machine Image", "Type", "Network", "Port", "State", "Actions", "Logs"],
+                    data: data?.components.map((comp, ind) => ({
+                        name: comp.name,
+                        machine_image: comp.machine_image,
+                        type: comp.type,
+                        network: comp.network,
+                        port: comp.application_port,
+                        state: <Badge color={comp.state == "running" ? "blue" : "yellow"}>{comp.state}</Badge>,
+                        action: comp.state == "running" && comp.machine_image != "traefik" ? <Button 
+                            variant="default"
+                            props={{
+                                onClick:  () => addHandlers.ssh_instance(comp.name),
+                                button: {
+                                    text: "Connect",
+                                    size: "xs"
+                                }
+                            }}
+                        /> : <Text ta="center">-</Text>,
+                        logs: <Button 
+                            variant="modal"
+                            props={{
+                                type: "icon-only",
+                                modal: {
+                                    size: "90vw"
+                                },           
+                                onClose: comp.state == "running" ? () => fx.base.kill(addHandlers.terminal_ref.current.getPid()): () => {},                         
+                                child: () => <Terminal
+                                    ref={addHandlers.terminal_ref}                                                                         
+                                    props={{
+                                        variant: "single",
+                                        job: fx.ec2.show_vi_logs,
+                                        args: comp.name
+                                    }}
+                                />,
+                                button: {
+                                    icon: <IconFileText stroke={1.5}/>,
+                                    variant: "transparent",
+                                    color: "grey"                                   
+                                }
+                            }}
+                        />
+                    }))
+                }}
+            />
+        </>
     )
 }
 
-export default LBDashboard
+
+const LBDashboard = () => {
+    const {lbData, message, isVisible, get_lb_cluster_information, start_lb_cluster, stop_lb_cluster, ssh_instance, delete_lb_clusters} = useLBDashboard()
+    const terminalRef = useRef()
+    useEffect(() => {get_lb_cluster_information()}, [])
+
+    return(
+        <Box>            
+            <SSHOverlay 
+                message={message}
+                isVisible={isVisible}
+            />
+
+            {<Table 
+                props={{
+                    rowSelectable: true,                    
+                    rowAttributeSelect: "Name",
+
+                    modal: {
+                        title: "Target Group Information",
+                        child: TGModal,
+                        size: "xxl",
+                        onOpen: (dt) => lbData.filter(tg => tg.name === dt["Name"])[0],
+                        addHandlers : {
+                            ssh_instance:  (cont_name) => ssh_instance(cont_name),
+                            terminal_ref: terminalRef                           
+                        }
+                    },
+
+
+                    taskbar:{
+                        props: {
+                            Right: ({selectedRows, setSelectedRows}) => (<Flex>
+                                <Button 
+                                    variant="default"
+                                    props={{
+                                            type:"icon-only",
+                                            onClick: get_lb_cluster_information,
+                                            button: {
+                                                icon : <IconRefresh stroke={1.5}/>,
+                                                color: "cyan",                                            
+                                            }
+                                        }}
+                                />
+                    
+                                <Space w="xs"/>
+                    
+                                <Button 
+                                    variant="modal"                                
+                                    props={{                                                                                                                                                                                                                    
+                                            child: DeleteConfirmationModal,
+                                            childState: {                                                            
+                                                onClickHandler: () => {delete_lb_clusters(selectedRows); setSelectedRows([])},
+                                                state: selectedRows
+                                            },                                                                                                                                                               
+                                            button: {                                            
+                                                text: "Delete Load Balancer(s)",
+                                                color: "red",
+                                                rightSection: <IconTrash stroke={1.5}/>,
+                                                disabled: selectedRows?.length == 0                                                                                                    
+                                            }
+                                        }}
+                                />
+                            </Flex>)
+                        }
+                    },
+
+
+                    columns: ["Name", "# of Services", "Network", "State", "Action", "Logs"],
+                    disableColumnSelectOn: ["Action", "Logs"],
+                    data: lbData.map(tg => ({                        
+                        "Name": tg.name,
+                        "# of Services": tg.components.length,
+                        "Network": tg.network,
+                        "State": <Badge color={tg.status == "running" ? "blue" : "yellow"}>{tg.status}</Badge>,
+                        "Action": tg.status == "running" ? 
+                        <Button 
+                            variant="default"
+                            props={{
+                                onClick: () => stop_lb_cluster(tg.name, tg.configFile),
+                                button: {
+                                    text: "Stop",
+                                    color: "red",
+                                    size: "xs"
+                                }
+                            }}
+                            /> 
+                        : 
+                        <Button 
+                            variant="default"
+                            props={{
+                                onClick: () => start_lb_cluster(tg.name, tg.configFile),
+                                button: {
+                                    text: "Start",
+                                    size: "xs"
+                                }
+                            }}
+                        />,
+                        "Logs": <Button 
+                            variant="modal"
+                            props={{
+                                type: "icon-only",
+                                
+                                onClose: tg.status == "running" ? () => fx.base.kill(terminalRef.current.getPid()) : () => {},
+                                modal: {                                    
+                                    size: "90vw"
+                                },                                
+                                child: () => (<>
+                                <Terminal 
+                                    ref={terminalRef}
+                                    props={{
+                                        variant: "single",
+                                        job: fx.ec2.show_lb_logs,
+                                        args: tg.configFile
+                                    }}
+                                /></>),
+                                button: {
+                                    icon: <IconFileText stroke={1.5}/>,
+                                    variant: "transparent",
+                                    color: "grey"
+                                }
+                            }}
+                        />
+                    }))
+                }}
+            />  }           
+        </Box>
+    )
+}
+
+export default LBDashboard 
