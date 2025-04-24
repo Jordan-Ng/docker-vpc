@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { AppShell as Appshell, Burger, Group, Image, Space, Text, NavLink, Menu, Button } from '@mantine/core';
 
-import navigationMenu from '../constants/NAVIGATION';
+import navigationMenu from '../../constants/NAVIGATION';
 import {Link} from "react-router-dom"
-import Logo from "../assets/logo.png"
+import Logo from "../../assets/logo.png"
 import { useDisclosure } from '@mantine/hooks';
 import { IconCaretDownFilled } from '@tabler/icons-react';
-import fx from "../helpers/fx"
+import fx from "../../helpers/fx"
 
 const AppShell = ({child, currentService, setCurrentService}) => {
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(false); 
   const [user, setUser] = useState("User")
 
+  const getUser = async () => {
+    const user = await fx.base.exec("whoami")
+    setUser(user.out)
+  }
   useEffect(() => {    
-    fx.base.exec("whoami").then(response => {if (response.exitStatus == 0){
-      setUser(response.out.trim())
-    }})
+    getUser()
   }, [])
 
   return (
@@ -48,7 +50,10 @@ const AppShell = ({child, currentService, setCurrentService}) => {
                 {Object.keys(navigationMenu).map((service, ind) => (
                 <Menu.Item key={ind}>
                   
-                  <Text c={currentService==service ? "blue" : ""} size='sm' onClick={() => setCurrentService(service)}>
+                  <Text c={currentService==service ? "blue" : ""} size='sm' onClick={() => {
+                    localStorage.setItem("current-service", service)
+                    setCurrentService(service)
+                    }}>
 
                   {navigationMenu[service]["Name"]}
                   </Text>
@@ -108,7 +113,7 @@ const AppShell = ({child, currentService, setCurrentService}) => {
 
         }
     </Appshell.Navbar>
-
+        
     <Appshell.Main bg="whitesmoke">{child}</Appshell.Main>
 
     <Appshell.Aside></Appshell.Aside>

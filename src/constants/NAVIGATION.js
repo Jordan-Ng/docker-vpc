@@ -1,6 +1,8 @@
 import React from 'react'
-import {EC2Dashboard, Volumes, InstanceTypes, CreateInstance, NewInstanceProvision} from '../pages'
-import {CreateLB, ProvisionLB, LBDashboard} from "../pages"
+
+import { EC2Dashboard, InstanceTypes, Volumes, LBDashboard, CreateLB, ProvisionLB, CreateInstance, ProvisionInstance } from '../pages'
+import { CreateHTTP, ProvisionHTTP, APIGWDashboard } from '../pages/API_GATEWAY'
+
 const type = {
     collapsible: "collapsible",
     nonCollapsible: "non-collapsible"
@@ -11,9 +13,8 @@ const navigationMenu = {
         "Name": "Elastic Container Compute",
         "Dashboard" : {
             type: type.nonCollapsible,
-            route: "/",
-            // component : (props) =>  <EC2Dashboard {...props}/>
-            component : <EC2Dashboard />            
+            route: "/",            
+            component : <EC2Dashboard />
         },
         "Instances" : {
             type: type.collapsible,
@@ -24,10 +25,9 @@ const navigationMenu = {
                 component: <CreateInstance />,
                 childRoutes: {
                     "New Instance Provision" : {
-                        type: type.nonCollapsible,
-                        // route: ":instance_name",
+                        type: type.nonCollapsible,                        
                         route: "new",
-                        component : <NewInstanceProvision />,
+                        component : <ProvisionInstance />,
                     }
                 }
             },            
@@ -48,8 +48,7 @@ const navigationMenu = {
             "Create Load Balancer" : {
                 type: type.nonCollapsible,
                 route: "create",
-                component: <CreateLB />,
-                // component: <ProvisionLB />,
+                component: <CreateLB />,                
                 childRoutes: {
                     "New Load Balancer Provision" : {
                         type: type.nonCollapsible,
@@ -65,8 +64,29 @@ const navigationMenu = {
             component: <Volumes />
         }
     },
-    "ALB" : {
-        "Name" : "Application Load Balancer"
+    "API-GW" : {
+        "Name" : "API Gateway",
+        "Dashboard" : {
+            type: type.nonCollapsible,
+            route: "/",
+            component: <APIGWDashboard />
+        },
+        "Create API Gateway" : {
+            type: type.collapsible,
+            route: "/api-gateway",
+            "HTTP API": {
+                type: type.nonCollapsible,
+                route: "http",
+                component: <CreateHTTP />,
+                childRoutes: {
+                    "New HTTP API-GW Provision" : {
+                        type: type.nonCollapsible,
+                        route: "new",
+                        component: <ProvisionHTTP />
+                    }
+                }                
+            },            
+        }
     }
 }
 

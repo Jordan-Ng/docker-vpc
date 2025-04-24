@@ -1,108 +1,118 @@
-import React, {useState, useEffect} from "react"
-import {Container, Text, TextInput, Button, Group, Space, Select, Chip, Switch, Flex, SimpleGrid, Tabs, NumberInput, Tooltip} from "@mantine/core"
-import {IconInfoCircle} from '@tabler/icons-react'
-import { Card, Modal, AddServices } from "../../components"
-import useEC2CreateLB_hooks from "../../helpers/hooks/EC2/useCreateLB"
-
+import React, {useState, useEffect} from 'react'
+import {Container, SimpleGrid, Space, Text, Box, TextInput, Group, Tabs, Flex, Switch, Select, NumberInput, Tooltip, Chip} from '@mantine/core'
+import { IconInfoCircle } from '@tabler/icons-react'
+import useCreateLB_hooks from '../../helpers/hooks/EC2/useCreateLB'
+import { Input, Card, Button } from '../../components'
 
 const CreateLB = () => {
-    const {lb_summary, images, onChange, populateMachineImages, handleSubmit} = useEC2CreateLB_hooks()
+    const {lbSummary, machineImages, populateMachineImages, onFieldChange, handleSubmit}  = useCreateLB_hooks()
 
     useEffect(() => {
         populateMachineImages()
-    }, [])
-
+    },[])
+    
     return(
         <Container>
-            <Text size="lg">Load Balancers</Text>
-            <Text size="sm">Horizontally scale your application with the help of load balancers</Text>
+            <Text size="lg">Application Load Balancers</Text>
+            <Text size="xs">Horizontally scale your application with the help of layer 7 application load balancers</Text>
 
             <SimpleGrid cols={2}>
-                <div>
+                <Box>
                     <Space h="lg"/>
                     <Card
-                        props= {{title: "Basic Configuration"}}
+                        props={{title: "Basic Configuration"}}
                     >
-                        <TextInput 
-                            required
-                            label="Load balancer name"
-                            onChange={e => onChange("name", e.target.value)}
+
+                                   
+                        <Input 
+                            variant="text"
+                            props={{
+                                input: {
+                                    label: "Load Balancer Name",
+                                    required: true,
+                                    onChange: e => onFieldChange("name", e.target.value)
+                                }
+
+                            }}
                         />
-                        <Text size="xs" c="gray">lower case + no special characters</Text>
+                        <Text size="xs" c="blue">Note: "lb-" will be prefixed</Text>
                     </Card>
 
-                    <Space h="sm"/>
+                    <Space h="md"/>
+
                     <Card
-                        props= {{title: "Listeners and Routing"}}
+                        props={{title: "Listeners and Routing"}}
                     >
-                        <Group>
+                        <Flex>
                             <TextInput 
                                 disabled
                                 label="Protocol"
-                                value="HTTP"                                
+                                value="HTTP"
                             />
+                            <Space w="xs"/>
                             <TextInput 
                                 disabled
                                 label="Port"
-                                value="80"                                
+                                value="80"
                             />
-                            
-                        </Group>
-                                                    
+                        </Flex>
+
                         <Space h="md"/>
 
                         <Switch 
-                        label="I plan to setup a reverse proxy/API gateway in front of this load balancer"
-                        description="Target Group will be exposed on host's port 80 if unchecked. If you plan to set up a reverse proxy for this service later, please check this box"
-                        color="teal"
-                        onClick={() => onChange("behind_reverse_proxy", !lb_summary.behind_reverse_proxy)}                            
+                            label="I plan to setup a reverse proxy/API gateway in front of this load balancer"
+                            description="Target Group will be exposed on host's port 80 if unchecked. If you plan to set up a reverse proxy for this service later, please check this box to avoid port conflicts"
+                            color="teal"
+                            checked={lbSummary.is_behind_reverse_proxy}
+                            onClick={() => onFieldChange("is_behind_reverse_proxy", !lbSummary.is_behind_reverse_proxy)}                            
                         />
+                    </Card>
 
-                        <Space h="md"/>
-                        
-                        
-                        <Text size="md">Services</Text>                        
-                        <Text size="xs" c="gray">Define services to place behind this load balancer</Text>
-                        
+                    <Space h="md"/>
+
+                    <Card
+                        props={{title: "Services"}}
+                    >
+                        <Text size="xs" c="blue">Define services to place behind this load balancer</Text>
+
                         <Space h="sm"/>
 
                         <Select 
                             placeholder="Machine Image"  
-                            data={images} 
-                            onChange={val => onChange("machine_image", val)}                       
+                            data={machineImages} 
+                            onChange={val => onFieldChange("machine_image", val)}                       
                         />
 
                         <Space h="sm"/>
 
                         <NumberInput
-                            placeholder="Port"
+                            placeholder=" Application Port"
                             hideControls   
                             rightSection={
                                 <Tooltip position="right-end" color="blue" label="Port where this application will be running from">
-                                    <IconInfoCircle size={20} color="lightGray"/>
+                                    <IconInfoCircle size={20} stroke={1.5} color="lightGray"/>
                                 </Tooltip>            
                             }
                             min={1024}
                             max={65535}
-                            onChange={val => onChange("port", val)}                         
+                            onChange={val => onFieldChange("port", val)}                         
                         />
-                        
-                        <Space h="sm"/>
+
+                        <Space h="sm"/> 
 
                         <NumberInput
                             placeholder="# of replicas needed"
-                            onChange={val => onChange("no_of_replicas", val)}
+                            onChange={val => onFieldChange("no_of_replicas", val)}
+                            defaultValue={1}
                             min={1}
                             max={5}                        
                         />
                     </Card>
 
-                    <Space h="sm"/>
-                    
-                </div>
+                </Box>
 
-                <div>
-                    <Space h="lg"/>
+                <Box>
+                <Space h="lg"/>
                     <Card
                             props={{title: "Summary"}}
                         >
@@ -123,13 +133,10 @@ const CreateLB = () => {
                                 <Space h="lg"/> 
                                 <Group>
                                 <Text c="blue" size="sm" fw={700}>Load Balancer Name</Text>
-                                {lb_summary.behind_reverse_proxy && <Chip defaultChecked  color="green">Behind Reverse Proxy</Chip>}
                                 </Group>
-                                <Text size="sm">lb-{lb_summary.name}</Text>
-
-                                <Space h="xl"/> 
-                                {/* <Text c="blue" size="sm" fw={700}>Behind Reverse Proxy?</Text>
-                                <Text size="sm">{lb_summary.behind_reverse_proxy.toString()}</Text> */}
+                                <Text size="sm">lb-{lbSummary.name}</Text>
+                                <Space h="xl"/>                                 
+                                {lbSummary.is_behind_reverse_proxy ? <Chip defaultChecked onChange={() => onFieldChange("is_behind_reverse_proxy", !lbSummary.is_behind_reverse_proxy)}  color="green">Behind Reverse Proxy</Chip> : <Space h={27}/>}
 
                                 
                             </Tabs.Panel>
@@ -139,25 +146,36 @@ const CreateLB = () => {
 
                                 <Space h="lg"/> 
                                 <Text c="blue" size="sm" fw={700}>Service Image</Text>
-                                <Text size="sm">{lb_summary.machine_image}</Text>
+                                <Text size="sm">{lbSummary.machine_image}</Text>
 
                                 <Space h="lg"/> 
                                 <Text c="blue" size="sm" fw={700}>Service Port</Text>
-                                <Text size="sm">{lb_summary.port}</Text>
+                                <Text size="sm">{lbSummary.port}</Text>
 
                                 <Space h="lg"/> 
                                 <Text c="blue" size="sm" fw={700}># of services in target group</Text>
-                                <Text size="sm">{lb_summary.no_of_replicas}</Text>
+                                <Text size="sm">{lbSummary.no_of_replicas}</Text>
                                 
                             </Tabs.Panel>
                         </Tabs>
                         <Space h="sm"/>
                         <Flex >
-                            <Button fullWidth onClick={handleSubmit}>Create Load Balancer</Button>
+                            <Button 
+                                variant="default"
+                                props={{
+                                    onClick: handleSubmit,
+                                    button: {
+                                        text: "Create Load Balancer",
+                                        fullWidth: true,
+                                        disabled: Object.values(lbSummary).filter(val => val === undefined).length > 0
+                                    }
+                                }}
+                            />
                         </Flex>
                     </Card>
-                </div>
+                </Box>
             </SimpleGrid>
+
         </Container>
     )
 }

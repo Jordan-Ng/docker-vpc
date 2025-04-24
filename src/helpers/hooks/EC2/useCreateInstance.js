@@ -12,35 +12,37 @@ const useEC2Creation_hooks = () => {
     const [isValidName, setIsValidName]= useState(undefined)
     const [timer, setTimer] = useState(null)
     const [instanceTypes, setInstanceTypes] = useState({})
+    const [inUsePorts, setInUsePorts] = useState(undefined)
     const [addPortError, setAddPortError] = useState({
         error: false,
         message: ""
     })
 
     const [summary, setSummary] = useState({
-        // instanceName : "express-app",
-        // image: "ubuntu",
-        // instanceType: {"Instance Size": "t1.micro",
-        // "vCPU": 1,
-        // "Memory": 1,
-        // "EBS Only" : true,            
-        // "Instance Storage": "EBS-Only"},
-        // volume: "poc-test",
-        // allowHTTP: true,
-        // allowHTTPS: true,
-        // additionalPorts: ["8081"],        
-        // network: "shared-poc",
+        instanceName : "express-app",
+        image: "ubuntu",
+        instanceType: {"Instance Size": "t1.micro",
+        "vCPU": 1,
+        "Memory": 1,
+        "EBS Only" : true,            
+        "Instance Storage": "EBS-Only"},
+        volume: "poc-test",
+        allowHTTP: true,
+        allowHTTPS: true,
+        additionalPorts: ["8081"],        
+        network: "shared-poc",
         // entrypoint: ["npm", "start", "--prefix", "/root/dummy-express"]        
+        entrypoint: ["bash", "-c" , "NODE_APP_SERVICE=Registrar npm start --prefix /root/dummy-express"]        
 
-        instanceName : undefined,
-        image: undefined,
-        instanceType: undefined,
-        volume: undefined,
-        allowHTTP: false,
-        allowHTTPS: false,
-        additionalPorts: [],        
-        networks: undefined,
-        entrypoint: undefined
+        // instanceName : undefined,
+        // image: undefined,
+        // instanceType: undefined,
+        // volume: undefined,
+        // allowHTTP: false,
+        // allowHTTPS: false,
+        // additionalPorts: [],        
+        // networks: undefined,
+        // entrypoint: []
     })
 
     const [options, setOptions] = useState({
@@ -75,7 +77,7 @@ const useEC2Creation_hooks = () => {
         setTimer(newTimer)
     }
      
-    const populateInputOptions = () => {
+    const populateInputOptions = async () => {
         const catalog = {}
 
         // create object catalog for all instance types
@@ -89,32 +91,25 @@ const useEC2Creation_hooks = () => {
         })
 
             
-        let availableVolumes 
-        fx.volume.list().then(data => {
-            availableVolumes = JSON.parse(data).map(vol => vol["name"])            
-        })
+        const availableVolumes = JSON.parse( await fx.ec2.list_volumes()).map(vol => vol["name"])
+        const availableNetworks = JSON.parse(await fx.ec2.list_networks()).map(obj => obj.name)
 
-        let availableNetworks
-        fx.ec2.list_networks().then(data => {
-            availableNetworks = JSON.parse(data).map(obj => obj.name)
-            
-        })
+        const unavailablePorts = (await fx.ec2.list_ports_in_use()).split('\n').map(port => parseInt(port))
+        unavailablePorts.pop()
 
-        // populate select input for images
-        fx.ec2.list_os_images().then(os_imgs => {
-            const os_images = JSON.parse(os_imgs)
-            const ami = [];
-            const images = ["ubuntu"];                    
-            
-            setInstanceTypes(catalog)  
-            setOptions({
-                ...options,
-                ami,
-                images,
-                volume : availableVolumes, 
-                networks: availableNetworks               
-            })
-        }) 
+        
+        const ami = [];
+        const images = ["ubuntu"];                    
+        
+        setInstanceTypes(catalog)              
+        setInUsePorts(new Set(unavailablePorts))
+        setOptions({
+            ...options,
+            ami,
+            images,
+            volume : availableVolumes, 
+            networks: availableNetworks               
+        })        
     }
 
     const handleSelect = (val, opt, field) => {
@@ -194,7 +189,7 @@ const useEC2Creation_hooks = () => {
     const handleAddEntryPointCommand = (e) => {
         setSummary({
             ...summary,
-            entrypoint: e.target.value
+            entrypoint: e.target.value.split(" ")
         })
 
     }
@@ -206,7 +201,7 @@ const useEC2Creation_hooks = () => {
         })
     }
 
-    const handleFormSubmit = (userScriptRef) => {        
+    const handleFormSubmit = async (userScriptRef) => {        
         
         const emptyFields= Object.keys(summary)
         .filter(field => summary[field] == undefined)
@@ -225,14 +220,48 @@ const useEC2Creation_hooks = () => {
         }
 
         navigate(`/instance/create/new`, {state: {
-            data: {
+            data: await prepareDockerfile({
                 ...summary,
                 isValidName,
                 portMappings,
                 userScripts: userScriptRef?.current.getUserScripts()
-            }
+            })
         }})
         
+    }
+
+    const prepareDockerfile = async(data) => {
+        try {
+            const dockerfileLocation = `./machine_images/${data.instanceName}/Dockerfile`
+            await fx.base.exec(`mkdir ./machine_images/${data.instanceName}`)
+            await fx.base.exec(`touch ${dockerfileLocation}`)
+            
+            const dockerfile = 
+`FROM ${data.image}:latest 
+LABEL name=${data.instanceName} 
+LABEL cpu=${data.instanceType.vCPU} 
+LABEL memory=${data.instanceType.memory} 
+LABEL container_type=vm_instance 
+
+# COPY PHASE 
+# ADD PHASE 
+${data.userScripts?.["ADD"].map(ins => `ADD ${ins[1]} ${ins[2]}`)}
+# RUN PHASE (bootstrap scripts) 
+${data.userScripts?.["RUN"].map(ins => `RUN ${ins[1]}`).join("\n")}
+
+${data.allowHTTP ? "EXPOSE 80" : ""} 
+${data.allowHTTPS ? "EXPOSE 443" : ""} 
+${data.additionalPorts.map(port => `EXPOSE ${port}`)}
+
+${data.entrypoint ? `CMD [${data.entrypoint.map(ent => `\\"${ent}\\"`).join(', ')}]` : ''}
+`
+
+            await fx.base.exec(`echo "${dockerfile}" > ${dockerfileLocation}`)            
+            return data         
+        }
+        catch {            
+            console.log("prepare dockerfile error")
+        }
     }
 
     
@@ -250,7 +279,8 @@ const useEC2Creation_hooks = () => {
         handleAddEntryPointCommand,
         handleChangePortMapping,
         handleNetworkChange,
-        handleFormSubmit
+        handleFormSubmit,
+        inUsePorts
     }
 }
 

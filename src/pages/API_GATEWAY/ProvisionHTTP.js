@@ -1,26 +1,31 @@
 import React, {useState, useEffect} from "react"
 import {Container, Grid, Timeline, Text, Flex, Loader, Space, Anchor, Center, Tabs, Code} from "@mantine/core"
 import { Terminal } from "../../components"
-import { IconTerminal, IconBrandDocker, IconCheck } from "@tabler/icons-react"
-import useProvisionLB_hooks from "../../helpers/hooks/EC2/useProvisionLB"
+import { IconTerminal, IconBrandDocker, IconCheck, IconFileAlert } from "@tabler/icons-react"
+import useProvisionHTTP_hooks from "../../helpers/hooks/API_GATEWAY/useProvisionHTTP"
 
 const ProvisionLB = () => {
-    const {checkpoint, setCheckpoint, getComposeFile, composeFile, jobs, location} = useProvisionLB_hooks()
+    const {jobs, location, summary, setSummary, isFileReady, composeFile, traefikConfigFile, getConfigFiles, checkpoint, setCheckpoint} = useProvisionHTTP_hooks()
+    
+    useEffect(() => {        
+        setSummary(location.state)
+    }, [location])    
 
     useEffect(() => {        
-        getComposeFile()
-    }, [])    
+        if (isFileReady) getConfigFiles()
+    }, [isFileReady])    
 
     return(
         <Container p={0}>
 
-            <Space h="xl"/>
+            <Space h="xl"/>            
+            {summary &&
             <Grid>
                 <Grid.Col span={12}>
                     <Center>
 
                     {checkpoint == jobs.length ? 
-                    <Flex><IconCheck style={{width: "15px", height: "15px"}} color="green"/><Space w="sm"/><Text size="sm">Provisioning Complete! <Anchor href="/load-balancer/dashboard" underline="hover">View LB Dashboard</Anchor></Text></Flex>
+                    <Flex><IconCheck style={{width: "15px", height: "15px"}} color="green"/><Space w="sm"/><Text size="sm">Provisioning Complete! <Anchor href="/" underline="hover">View API-GW Dashboard</Anchor></Text></Flex>
                     :
                     <Flex><Loader size="sm" /><Space w="sm"/><Text size="sm">Provisioning in Progress. Please do not refresh this page!</Text></Flex>}
                     </Center>
@@ -35,16 +40,20 @@ const ProvisionLB = () => {
                                 <Text c="dimmed" size="sm">Generating docker-compose.yaml</Text>
                             </Timeline.Item>
 
-                            <Timeline.Item title="Composing Load Balancer Service">
-                                <Text c="dimmed" size="sm">Building new Load Balancer Orchestration with user configurations</Text>
+                            <Timeline.Item title="Scaffolding Dynamic Route Configurations">
+                                <Text c="dimmed" size="sm">Generating traefik_dynamic.yml</Text>
                             </Timeline.Item>
 
-                            <Timeline.Item title="Starting LB Target Group Cluster">
-                                <Text c="dimmed" size="sm">Starting Load Balancer Orchestration</Text>
+                            <Timeline.Item title="Cross Checking services">
+                                <Text c="dimmed" size="sm">Verifying integration targets are online</Text>
+                            </Timeline.Item>      
+
+                            <Timeline.Item title="Taking API Gateway Online">
+                                <Text c="dimmed" size="sm">Starting API Gateway Service</Text>
                             </Timeline.Item>                        
 
                             <Timeline.Item title="Done!">                            
-                                <Text c="dimmed" size="sm">Load Balancer provisioned. {checkpoint == jobs.length && <Anchor href="/load-balancer/dashboard" underline="hover">View LB Dashboard</Anchor>}</Text>
+                                <Text c="dimmed" size="sm">API Gateway provisioned. {checkpoint == jobs.length && <Anchor href="/" underline="hover">View API-GW Dashboard</Anchor>}</Text>
                             </Timeline.Item>
                         </Timeline>
 
@@ -59,15 +68,19 @@ const ProvisionLB = () => {
                             <Tabs.Tab value="docker-compose" leftSection={<IconBrandDocker stroke={1} style={{width: "20px", height: "20px"}}/>}>
                                 <Text size="xs">docker-compose.yml</Text>
                             </Tabs.Tab>
+                            <Tabs.Tab value="traefik-dynamic" leftSection={<IconFileAlert stroke={1} style={{width: "20px", height: "20px"}}/>}>
+                                <Text size="xs">traefik-dynamic.yml</Text>
+                            </Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="Terminal">
                             <Terminal                                 
-                                jobs={jobs}
+                                jobs={jobs}                                
                                 checkpoint={checkpoint}
                                 setCheckpoint={setCheckpoint}
+                                
                                 props={{
-                                    height: "500px",                                                                                                                                                
+                                    height: "500px",                                                                                                                                                                                    
                                 }}
                                 />                                 
                         </Tabs.Panel>
@@ -75,9 +88,13 @@ const ProvisionLB = () => {
                         <Tabs.Panel value="docker-compose">                                                        
                             <Code style={{height: "500px"}} color="black" c="white" block>{composeFile}</Code>
                         </Tabs.Panel>
+
+                        <Tabs.Panel value="traefik-dynamic">                                                        
+                            <Code style={{height: "500px"}} color="black" c="white" block>{traefikConfigFile}</Code>
+                        </Tabs.Panel>
                     </Tabs>
                 </Grid.Col>
-            </Grid>
+            </Grid>}
         </Container>
     )
 }

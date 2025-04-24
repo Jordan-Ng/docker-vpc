@@ -1,17 +1,12 @@
 import React from "react"
 import {Space, Button, Badge, Text} from "@mantine/core"
 import {IconAlertTriangle} from "@tabler/icons-react"
-import fx from "../../helpers/fx"
 
-const DeleteConfirmationModal = ({close, onClickHandler, states}) => {
-    const handleClick = async () => {
-        // const deleted = await fx.ec2.delete_instances(states.state)
-        // states.setState([])
-        // close()
-        // callback()
-        await onClickHandler()
+const DeleteConfirmationModal = ({props : {close, onClickHandler, state}}) => {
+    const handleClick = async () => {        
+        if (typeof onClickHandler === "function")await onClickHandler()
         close()
-    }
+    }    
 
     return(
         <>
@@ -22,7 +17,7 @@ const DeleteConfirmationModal = ({close, onClickHandler, states}) => {
                 This is a destructive operation*
             </Text>
             <Space h="md"/>                 
-            {states.state.map((vol, ind) => <Badge key={ind} style={{marginRight: "5px"}}>{vol}</Badge>)}
+            {state.map((vol, ind) => <Badge key={ind} style={{marginRight: "5px"}}>{vol}</Badge>)}
             <Space h="md"/>
                 
             

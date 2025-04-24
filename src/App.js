@@ -1,16 +1,27 @@
 import React, {useState, useEffect} from 'react';
 
-import {Routes, Route, Link, useLocation, useNavigate} from "react-router-dom"
+import {Routes, Route, useNavigate} from "react-router-dom"
 
-import {AppShell, Table} from './components';
+import {AppShell} from './components';
 import navigationMenu from './constants/NAVIGATION';
 
 const App = () => {
-  const [currentService, setCurrentService] = useState("EC2")
+  const [currentService, setCurrentService] = useState(() => localStorage.getItem("current-service") || "EC2")
   const currentServicedRoutes = navigationMenu[currentService]
+  const navigate = useNavigate()
+
+  useEffect(() => {            
+    // const isCurrent = window.location.pathname.startsWith(`/${currentService}`)
+
+    // if (!isCurrent){      
+      // navigate(`/${currentService}${navigationMenu[currentService]["Dashboard"].route}`)    
+    // }
+    
+  }, [currentService])
+
 
   return (
-    <>
+    <>            
       <AppShell 
       
         child={
@@ -22,18 +33,18 @@ const App = () => {
                 return(
                   <Route 
                     key={ind} 
-                    path={currentServicedRoutes[rt].route} 
+                    path={`${currentServicedRoutes[rt].route}`} 
                     element={currentServicedRoutes[rt].component}/>
                 )
               }
-
+              
               return(
-                <Route key="key" path={currentServicedRoutes[rt].route}>
+                <Route key="key" path={`${currentServicedRoutes[rt].route}`}>
 
                     {Object.keys(currentServicedRoutes[rt]).map((label, ind) => {
                       
                       if (label == "type" || label == "route") return                      
-
+                      
                       return(
                         <Route key={ind} path={currentServicedRoutes[rt][label].route}>
                           <Route index element={currentServicedRoutes[rt][label].component}/>
@@ -53,12 +64,13 @@ const App = () => {
                     })}
                 </Route>
               )})}                          
-              {/* <Route path="*" element={currentServicedRoutes["EC2 Dashboard"].component}/> */}              
+              <Route path="*" element={currentServicedRoutes["Dashboard"].component}/>              
           </Routes>}
         
         currentService={currentService}
         setCurrentService={setCurrentService}
       />      
+      
     </>
     );
 };
