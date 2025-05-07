@@ -1,6 +1,3 @@
 node_modules
 package-lock.json
-machine_images/*
-compose_files/*
-gw_compose_files/*
 dist/*
