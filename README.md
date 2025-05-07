@@ -16,7 +16,18 @@ See DockerVPC in action [here!](https://jiaweing930113.wixsite.com/my-site-1/pro
 
 
 ## Installation
-To be Addressed
+This installation guide assumes that NodeJS runtime is available on the target machine.
+
+> *** NOTE: *** The installation steps are to get the application running in development mode. Production mode to follow
+
+```
+$ git clone https://github.com/Jordan-Ng/docker-vpc.git               
+$ cd docker-vpc                                     
+$ chmod +x ./bin                         
+$ sh ./bin/install.sh                                           // install docker + colima
+$ npm install
+$ npm run dev                           
+```
 
 
 
